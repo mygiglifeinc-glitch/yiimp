@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
+# YiiMP console helper: yiimp <command> [args...] (runs web/yaamp/yiic.php)
 
 ROOTDIR=/data/yiimp
-DIR=`pwd`
 
-cd "$ROOTDIR/web" && php yaamp/yiic.php "$@"
+if [ ! -f "$ROOTDIR/web/yaamp/yiic.php" ]; then
+	echo "yiimp: $ROOTDIR/web/yaamp/yiic.php not found (check ROOTDIR in $0)" >&2
+	exit 1
+fi
 
-cd $DIR
+# run from the web folder in a subshell, the caller's directory is kept
+( cd "$ROOTDIR/web" && exec php yaamp/yiic.php "$@" )
