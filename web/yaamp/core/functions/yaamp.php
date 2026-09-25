@@ -29,8 +29,10 @@ function yaamp_get_algos()
         'deep',
         'dmd-gr',
         'exosis',
+        'flex',
         'fresh',
         'geek',
+        'ghostrider',
         'groestl',
         'hex',
         'hmq1725',
@@ -50,7 +52,9 @@ function yaamp_get_algos()
         'lyra2z330',
         'lyra2zz',
         'm7m',
+        'mike',
         'minotaur',
+        'minotaurx',
         'myr-gr',
         'neoscrypt',
         'nist5',
@@ -144,6 +148,10 @@ function yaamp_algo_mBTC_factor($algo)
         case 'sha512256d':
         case 'sha3-256t':
             return 1000;
+        case 'ghostrider':
+        case 'mike':
+        case 'flex':
+            return 0.001;
         default:
             return 1;
     }
@@ -222,8 +230,10 @@ function getAlgoColors($algo)
         'deep' => '#e0ffff',
         'dmd-gr' => '#a0c0f0',
         'exosis' => '#49CCFE',
+        'flex' => '#80d0c0',
         'fresh' => '#e0e0e0',
         'geek' => '#d0a0a0',
+        'ghostrider' => '#c080e0',
         'groestl' => '#d0a0a0',
         'hex' => '#c0f0c0',
         'hmq1725' => '#ffa0a0',
@@ -243,7 +253,9 @@ function getAlgoColors($algo)
         'lyra2z330' => '#80b0f0',
         'lyra2zz' => '#80b0f0',
         'm7m' => '#d0a0a0',
+        'mike' => '#b0a0e0',
         'minotaur' => '#e0e0e0',
+        'minotaurx' => '#e0b080',
         'myr-gr' => '#a0c0f0',
         'neoscrypt' => '#a0d0f0',
         'nist5' => '#c0e0e0',
@@ -352,8 +364,10 @@ function getAlgoPort($algo)
         'deep' => 3535,
         'dmd-gr' => 5333,
         'exosis' => 3557,
+        'flex' => 9304,
         'fresh' => 4144,
         'geek' => 3692,
+        'ghostrider' => 9301,
         'groestl' => 9406,
         'hex' => 5135,
         'hmq1725' => 3747,
@@ -373,7 +387,9 @@ function getAlgoPort($algo)
         'lyra2z330' => 3000,
         'lyra2zz' => 4556,
         'm7m' => 6033,
+        'mike' => 9302,
         'minotaur' => 7018,
+        'minotaurx' => 9303,
         'myr-gr' => 5433,
         'neoscrypt' => 4233,
         'nist5' => 3833,
