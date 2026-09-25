@@ -235,9 +235,25 @@ YAAMP_JOB_TEMPLATE *coind_create_template(YAAMP_COIND *coind)
 
 	char params[512] = "[{}]";
 	if(!strcmp(coind->symbol, "PPC")) strcpy(params, "[]");
+	else if(coind->usemweb) strcpy(params, "[{\"rules\":[\"mweb\",\"segwit\"]}]");
 	else if(g_stratum_segwit) strcpy(params, "[{\"rules\":[\"segwit\"]}]");
 
 	json_value *json = rpc_call(&coind->rpc, "getblocktemplate", params);
+
+	// Litecoin Core (0.21.2+) refuses getblocktemplate without the mweb rule:
+	// remember that and ask again.
+	json_value *json_first_result = json ? json_get_object(json, "result") : NULL;
+	if(json && !coind->usemweb && (!json_first_result || json_is_null(json_first_result))) {
+		json_value *json_error = json_get_object(json, "error");
+		const char *message = json_error ? json_get_string(json_error, "message") : NULL;
+		if(message && strstr(message, "mweb")) {
+			debuglog("%s requires the mweb rule, enabling MWEB\n", coind->symbol);
+			coind->usemweb = true;
+			json_value_free(json);
+			strcpy(params, "[{\"rules\":[\"mweb\",\"segwit\"]}]");
+			json = rpc_call(&coind->rpc, "getblocktemplate", params);
+		}
+	}
 	if(!json || json_is_null(json))
 	{
 		// coind_error() reset auto_ready, and DCR gbt can fail
@@ -308,6 +324,18 @@ YAAMP_JOB_TEMPLATE *coind_create_template(YAAMP_COIND *coind)
 	const char *flags = json_get_string(json_coinbaseaux, "flags");
 	strcpy(templ->flags, flags ? flags : "");
 	strcpy(templ->priceinfo, "");
+
+	// Litecoin MWEB extension block, serialized after the transactions
+	const char *mweb = json_get_string(json_result, "mweb");
+	if (mweb && strlen(mweb)) {
+		if (!ishexa((char *)mweb, strlen(mweb)) || strlen(mweb) % 2) {
+			coind_error(coind, "getblocktemplate mweb");
+			delete templ;
+			json_value_free(json);
+			return NULL;
+		}
+		templ->mweb.push_back(mweb);
+	}
 
 	// LBC Claim Tree (with wallet gbt patch)
 	const char *claim = json_get_string(json_result, "claimtrie");

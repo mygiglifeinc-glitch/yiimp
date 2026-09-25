@@ -166,6 +166,8 @@ static void client_do_submit(YAAMP_CLIENT *client, YAAMP_JOB *job, YAAMP_JOB_VAL
 
 	for(i = templ->txdata.begin(); i != templ->txdata.end(); ++i)
 		block_size += strlen((*i).c_str());
+	for(i = templ->mweb.begin(); i != templ->mweb.end(); ++i)
+		block_size += strlen((*i).c_str()) + 2;
 
 	char *block_hex = (char *)malloc(block_size);
 	if(!block_hex) return;
@@ -247,6 +249,11 @@ static void client_do_submit(YAAMP_CLIENT *client, YAAMP_JOB *job, YAAMP_JOB_VAL
 		vector<string>::const_iterator i;
 		for(i = templ->txdata.begin(); i != templ->txdata.end(); ++i)
 			sprintf(block_hex+strlen(block_hex), "%s", (*i).c_str());
+
+		// Litecoin MWEB: the extension block follows the HogEx transaction,
+		// as an optional pointer (0x01 = present)
+		for(i = templ->mweb.begin(); i != templ->mweb.end(); ++i)
+			sprintf(block_hex+strlen(block_hex), "01%s", (*i).c_str());
 
 		// POS coins need a zero byte appended to block, the daemon replaces it with the signature
 		if(coind->pos)
