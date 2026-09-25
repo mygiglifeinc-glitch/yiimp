@@ -60,10 +60,18 @@ void protocol_nbits_to_target(const char *nbits, unsigned char target[32])
 void protocol_diff_to_target(const unsigned char diff1[32], double difficulty, unsigned char target[32])
 {
 	// target = diff1 / difficulty, with a long double (64 bits of precision are plenty)
+	int shift = 0;
 	long double t = 0;
-	for (int i = 0; i < 32; i++)
-		t = t * 256.0L + diff1[i];
+	for (int i = 0; i < 32; i++) {
+		if (!t && !diff1[i]) continue;
+		if (t >= ldexpl(1.0L, 32)) shift += 8; // diff1 is a few significant bytes and zeros
+		else t = t * 256.0L + diff1[i];
+	}
 	if (difficulty > 0) t /= (long double) difficulty;
+	// 0xff / 0.002 is 127499.999..., make it 127500 (a clean target for the miners)
+	long double r = roundl(t);
+	if (r > 0 && fabsl(t - r) < r * 1e-12L) t = r;
+	t = ldexpl(t, shift);
 
 	long double max = ldexpl(1.0L, 256);
 	if (t >= max) {
