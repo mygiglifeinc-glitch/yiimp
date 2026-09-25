@@ -12,6 +12,48 @@
 #ifndef BLAKE2_H
 #define BLAKE2_H
 
+/*
+ * yiimp: libalgos.a also contains the argon2 blake2b (algos/blake2) and
+ * libhash.a the sha3/blake2s.c and sha3/blake2b.c implementations, with the
+ * same function names but different state structures. Give this copy its own
+ * symbols so that each algo is linked with the implementation it was
+ * compiled for.
+ */
+#define blake2s_init         blake2ref_s_init
+#define blake2s_init_key     blake2ref_s_init_key
+#define blake2s_init_param   blake2ref_s_init_param
+#define blake2s_update       blake2ref_s_update
+#define blake2s_final        blake2ref_s_final
+#define blake2b_init         blake2ref_b_init
+#define blake2b_init_key     blake2ref_b_init_key
+#define blake2b_init_param   blake2ref_b_init_param
+#define blake2b_update       blake2ref_b_update
+#define blake2b_final        blake2ref_b_final
+#define blake2sp_init        blake2ref_sp_init
+#define blake2sp_init_key    blake2ref_sp_init_key
+#define blake2sp_update      blake2ref_sp_update
+#define blake2sp_final       blake2ref_sp_final
+#define blake2bp_init        blake2ref_bp_init
+#define blake2bp_init_key    blake2ref_bp_init_key
+#define blake2bp_update      blake2ref_bp_update
+#define blake2bp_final       blake2ref_bp_final
+#define blake2xs_init        blake2ref_xs_init
+#define blake2xs_init_key    blake2ref_xs_init_key
+#define blake2xs_update      blake2ref_xs_update
+#define blake2xs_final       blake2ref_xs_final
+#define blake2xb_init        blake2ref_xb_init
+#define blake2xb_init_key    blake2ref_xb_init_key
+#define blake2xb_update      blake2ref_xb_update
+#define blake2xb_final       blake2ref_xb_final
+#define blake2s              blake2ref_s
+#define blake2b              blake2ref_b
+#define blake2sp             blake2ref_sp
+#define blake2bp             blake2ref_bp
+#define blake2xs             blake2ref_xs
+#define blake2xb             blake2ref_xb
+#define blake2               blake2ref_hash
+#define blake2b_long         blake2ref_b_long
+
 #include <stddef.h>
 #include <stdint.h>
 

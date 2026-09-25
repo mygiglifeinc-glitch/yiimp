@@ -5,8 +5,9 @@
 
 #include "sysendian.h"
 
-#include "ar2/argon2.h"
-#include "ar2/core.h"
+// the implementation linked in libalgos.a is the one of argon2d/ (not ar2/)
+#include "argon2d/argon2.h"
+#include "argon2d/core.h"
 
 static const size_t INPUT_BYTES = 80;  // Lenth of a block header in bytes. Input Length = Salt Length (salt = input)
 static const size_t OUTPUT_BYTES = 32; // Length of output needed for a 256-bit hash
@@ -34,6 +35,8 @@ void argon2d_call(const void *input, void *output)
     context.threads = 1;   // Threads
     context.t_cost = 1;    // Iterations
 
+    context.version = ARGON2_VERSION_10; // same as the former ar2 implementation
+
 	argon2_ctx(&context, Argon2_d);
 }
 void argon2d_dyn_call(const void *input, void *output)
@@ -57,6 +60,8 @@ void argon2d_dyn_call(const void *input, void *output)
     context.lanes = 8;     // Degree of Parallelism
     context.threads = 1;   // Threads
     context.t_cost = 2;    // Iterations
+
+    context.version = ARGON2_VERSION_10; // same as the former ar2 implementation
 
 	argon2_ctx(&context, Argon2_d);
 }
@@ -82,6 +87,8 @@ void argon2d_uis_call(const void *input, void *output)
     context.lanes = 4;     // Degree of Parallelism
     context.threads = 1;   // Threads
     context.t_cost = 1;    // Iterations
+
+    context.version = ARGON2_VERSION_10; // same as the former ar2 implementation
 
 	argon2_ctx(&context, Argon2_d);
 }

@@ -2,6 +2,11 @@
 #ifndef __BLAKE2B_H__
 #define __BLAKE2B_H__
 
+/* distinct symbols from the argon2 blake2b (algos/blake2) of libalgos.a */
+#define blake2b_init   sph_blake2b_init
+#define blake2b_update sph_blake2b_update
+#define blake2b_final  sph_blake2b_final
+
 #include <stddef.h>
 #include <stdint.h>
 
