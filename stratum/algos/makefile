@@ -30,6 +30,7 @@ SOURCES=lyra2re.c lyra2v2.c lyra2v3.c Lyra2.c lyra2z.c Lyra2-z.c lyra2zz.c Lyra2
 	ghostrider.c flex.c cryptonote/cn_slow_hash.c cryptonote/aesb.c cryptonote/c_keccak.c cryptonote/c_blake256.c \
 	cryptonote/c_groestl.c cryptonote/c_jh.c cryptonote/c_skein.c \
 	progpow/keccak.c progpow/keccakf800.c progpow/keccakf1600.c progpow/primes.c progpow/progpow.cpp \
+	equihash/equihash_verify.c \
 
 # BLAKE3 (decred, blake3): portable C only, no SIMD code to keep the build
 # independent of MARCH (a 180-byte header is a single BLAKE3 chunk anyway)
@@ -63,3 +64,4 @@ clean:
 	rm -f blake3/*.o blake3/*.d
 	rm -f cryptonote/*.o cryptonote/*.d
 	rm -f progpow/*.o progpow/*.d
+	rm -f equihash/*.o equihash/*.d
