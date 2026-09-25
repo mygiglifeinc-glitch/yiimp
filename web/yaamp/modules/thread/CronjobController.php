@@ -4,6 +4,17 @@ require_once ('yaamp/defaultconfig.php');
 
 class CronjobController extends CommonController
 {
+    // These actions run payments, backups, trading and restart services:
+    // they must only be started by the cron threads (runconsole.php/run.php),
+    // never through the web server (/cronjob/run...).
+    protected function beforeAction($action)
+    {
+        if (php_sapi_name() != 'cli') {
+            throw new CHttpException(404, 'The requested page does not exist.');
+        }
+        return parent::beforeAction($action);
+    }
+
     private function monitorApache()
     {
         if (!YAAMP_PRODUCTION) return;
