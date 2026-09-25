@@ -113,6 +113,7 @@ YAAMP_ALGO g_algos[] =
 	{"bmw", bmw_hash, 1, 0, 0},
 	{"bmw512", bmw512_hash, 0x100, 0, 0},
 	{"c11", c11_hash, 1, 0, 0},
+	{"cpupower", cpupower_hash, 0x10000, 0, 0}, // CPUchain (CPU)
 	{"decred", decred_hash, 1, 0 },
 	{"dedal", dedal_hash, 0x100, 0, 0},
 	{"deep", deep_hash, 1, 0, 0},
@@ -150,6 +151,7 @@ YAAMP_ALGO g_algos[] =
 	{"phi1612", phi1612_hash, 1, 0, 0},
 	{"pipe", pipe_hash, 1,0,0},
 	{"polytimos", polytimos_hash, 1, 0, 0},
+	{"power2b", power2b_hash, 0x10000, 0, 0}, // MicroBitcoin (MBC), yespower 1.0 with BLAKE2b
 	{"quark", quark_hash, 1, 0, 0},
 	{"qubit", qubit_hash, 1, 0, 0},
 	{"rainforest", rainforest_hash, 1, 0, 0},
@@ -190,7 +192,20 @@ YAAMP_ALGO g_algos[] =
 	{"x22i", x22i_hash, 1, 0, 0},
   {"x25x", x25x_hash, 1, 0, 0},
 	{"xevan", xevan_hash, 0x100, 0, 0},
+	{"yescrypt", yescrypt_hash, 0x10000, 0, 0}, // GlobalBoost-Y (BSTY), Myriad (XMY)
+	{"yescryptR8", yescryptR8_hash, 0x10000, 0, 0}, // BitZeny (ZNY)
+	{"yescryptR16", yescryptR16_hash, 0x10000, 0, 0},
+	{"yescryptR32", yescryptR32_hash, 0x10000, 0, 0}, // WAVI, LuckyPepe (LPEPE)
 	{"yespower", yespower_hash, 0x10000, 0, 0},
+	{"yespowerADVC", yespowerADVC_hash, 0x10000, 0, 0}, // AdventureCoin (ADVC)
+	{"yespowerARWN", yespowerARWN_hash, 0x10000, 0, 0}, // Arowanacoin (ARWN)
+	{"yespowerIC", yespowerIC_hash, 0x10000, 0, 0}, // IsotopeC (IC)
+	{"yespowerLITB", yespowerLITB_hash, 0x10000, 0, 0}, // LightBit (LITB)
+	{"yespowerLTNCG", yespowerLTNCG_hash, 0x10000, 0, 0}, // Crionic (CRNC), LightningCash Gold
+	{"yespowerMGPC", yespowerMGPC_hash, 0x10000, 0, 0}, // Magpiecoin (MGPC)
+	{"yespowerR16", yespowerR16_hash, 0x10000, 0, 0}, // Yenten (YTN)
+	{"yespowerSUGAR", yespowerSUGAR_hash, 0x10000, 0, 0}, // Sugarchain (SUGAR)
+	{"yespowerTIDE", yespowerTIDE_hash, 0x10000, 0, 0}, // Tidecoin (TDC)
 	{"yespowerurx", yespowerurx_hash, 0x10000, 0, 0},
 	{"zr5", zr5_hash, 1, 0, 0},
 	{"", NULL, 0, 0},
