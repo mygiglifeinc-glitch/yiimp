@@ -411,6 +411,7 @@ void *monitor_thread(void *p)
 			}
 		}
 	}
+	return NULL;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -464,8 +465,10 @@ void *stratum_thread(void *p)
 			close(sock);
 			g_exiting = true;
 			stratumlog("%s pthread_create error %d %d\n", g_stratum_algo, res, error);
+			continue;
 		}
 
 		pthread_detach(thread);
 	}
+	return NULL;
 }

@@ -27,3 +27,5 @@ web/keys.sample.php
 web/yaamp/modules/site/coin_form.php
 web/yaamp/modules/site/index.php
 web/yaamp/modules/site/results/current_results.php
+stratum/hashtest
+*.d

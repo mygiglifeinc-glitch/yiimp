@@ -18,7 +18,7 @@
 #endif
 
 // state context
-ALIGN(64) typedef struct {
+typedef struct ALIGN(64) {
 	uint8_t b[128]; // input buffer
 	uint64_t h[8];  // chained state
 	uint64_t t[2];  // total number of bytes
