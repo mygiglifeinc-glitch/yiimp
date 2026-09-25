@@ -280,7 +280,7 @@ function coin_set_default($symbol, $key, $value)
 	return $res;
 }
 
-function coin_unset($exchange, $symbol, $key)
+function coin_unset($symbol, $key)
 {
 	global $cacheset_coin;
 	$cacheset_coin = array();

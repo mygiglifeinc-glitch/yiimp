@@ -430,7 +430,7 @@ class CoinCommand extends CConsoleCommand
         }
         $res = coin_set($symbol, $key, $value);
         $val = coin_get($symbol, $key);
-        echo ($res ? "$symbol $exchange $key " . json_encode($val) : "error") . "\n";
+        echo ($res ? "$symbol $key " . json_encode($val) : "error") . "\n";
         return 0;
     }
 
