@@ -15,11 +15,13 @@ void get_next_extraonce1(char *extraonce1)
 
 void get_random_key(char *key)
 {
-	int i1 = rand();
-	int i2 = rand();
-	int i3 = rand();
-	int i4 = rand();
-	sprintf(key, "%08x%08x%08x%08x", i1, i2, i3, i4);
+	// the notify id allows a reconnecting miner to take over the session
+	// (userid, extranonce...) of another one, so it must not be guessable
+	uint32_t r[4];
+	if (getrandom(r, sizeof(r), 0) != (ssize_t) sizeof(r)) {
+		r[0] = rand(); r[1] = rand(); r[2] = rand(); r[3] = rand();
+	}
+	sprintf(key, "%08x%08x%08x%08x", r[0], r[1], r[2], r[3]);
 }
 
 YAAMP_CLIENT *client_find_notify_id(const char *notify_id, bool reconnecting)
@@ -65,9 +67,9 @@ int client_send_error(YAAMP_CLIENT *client, int error, const char *string)
 	char buffer3[1024];
 
 	if(client->id_str)
-		sprintf(buffer3, "\"%s\"", client->id_str);
+		snprintf(buffer3, sizeof(buffer3), "\"%s\"", client->id_str);
 	else
-		sprintf(buffer3, "%d", client->id_int);
+		snprintf(buffer3, sizeof(buffer3), "%d", client->id_int);
 
 	return socket_send(client->sock, "{\"id\":%s,\"result\":false,\"error\":[%d,\"%s\",null]}\n", buffer3, error, string);
 }
@@ -78,15 +80,15 @@ int client_send_result(YAAMP_CLIENT *client, const char *format, ...)
 	va_list args;
 
 	va_start(args, format);
-	vsprintf(buffer, format, args);
+	vsnprintf(buffer, sizeof(buffer), format, args);
 	va_end(args);
 
 	char buffer3[1024];
 
 	if(client->id_str)
-		sprintf(buffer3, "\"%s\"", client->id_str);
+		snprintf(buffer3, sizeof(buffer3), "\"%s\"", client->id_str);
 	else
-		sprintf(buffer3, "%d", client->id_int);
+		snprintf(buffer3, sizeof(buffer3), "%d", client->id_int);
 
 	return socket_send(client->sock, "{\"id\":%s,\"result\":%s,\"error\":null}\n", buffer3, buffer);
 }
@@ -97,7 +99,7 @@ int client_call(YAAMP_CLIENT *client, const char *method, const char *format, ..
 	va_list args;
 
 	va_start(args, format);
-	vsprintf(buffer, format, args);
+	vsnprintf(buffer, sizeof(buffer), format, args);
 	va_end(args);
 
 	return socket_send(client->sock, "{\"id\":null,\"method\":\"%s\",\"params\":%s}\n", method, buffer);
@@ -110,10 +112,10 @@ int client_ask(YAAMP_CLIENT *client, const char *method, const char *format, ...
 	int64_t id = client->shares;
 
 	va_start(args, format);
-	vsprintf(buffer, format, args);
+	vsnprintf(buffer, sizeof(buffer), format, args);
 	va_end(args);
 
-	int ret = socket_send(client->sock, "{\"id\":%d,\"method\":\"%s\",\"params\":%s}\n", id, method, buffer);
+	int ret = socket_send(client->sock, "{\"id\":%d,\"method\":\"%s\",\"params\":%s}\n", (int) id, method, buffer);
 	if (ret == -1) {
 		debuglog("unable to ask %s\n", method);
 		return 0; // -errno
@@ -125,7 +127,7 @@ int client_ask(YAAMP_CLIENT *client, const char *method, const char *format, ...
 void client_block_ip(YAAMP_CLIENT *client, const char *reason)
 {
 	char buffer[1024];
-	sprintf(buffer, "iptables -A INPUT -s %s -p tcp --dport %d -j REJECT", client->sock->ip, g_tcp_port);
+	snprintf(buffer, sizeof(buffer), "iptables -A INPUT -s %s -p tcp --dport %d -j REJECT", client->sock->ip, g_tcp_port);
 	if(strcmp("0.0.0.0", client->sock->ip) == 0) return;
 	if(strstr(client->sock->ip, "192.168.")) return;
 	if(strstr(client->sock->ip, "127.0.0.")) return;
@@ -137,7 +139,7 @@ void client_block_ip(YAAMP_CLIENT *client, const char *reason)
 void client_block_ipset(YAAMP_CLIENT *client, const char *ipset_name)
 {
 	char buffer[1024];
-	sprintf(buffer, "ipset -q -A %s %s", ipset_name, client->sock->ip);
+	snprintf(buffer, sizeof(buffer), "ipset -q -A %s %s", ipset_name, client->sock->ip);
 	if(strcmp("0.0.0.0", client->sock->ip) == 0) return;
 	if(strstr(client->sock->ip, "192.168.")) return;
 	if(strstr(client->sock->ip, "127.0.0.")) return;
@@ -232,6 +234,9 @@ bool client_initialize_multialgo(YAAMP_CLIENT *client)
 			{
 				int i=0;
 				for(; i<YAAMP_MAXALGOS-1 && client->algos_subscribed[i].algo; i++);
+
+				// keep the last entry NULL, it terminates the list
+				if(i >= YAAMP_MAXALGOS-1) break;
 
 				client->algos_subscribed[i].algo = algo;
 				client->algos_subscribed[i].factor = value? value: algo->factor;

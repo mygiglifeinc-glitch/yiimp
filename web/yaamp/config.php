@@ -1,5 +1,11 @@
 <?php
 
+// session hardening: reject unknown session ids (fixation), cookies only
+if (session_status() == PHP_SESSION_NONE) {
+	ini_set('session.use_strict_mode', '1');
+}
+$yaamp_https = !empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) != 'off';
+
 return array(
 	'name'=>YAAMP_SITE_URL,
 
@@ -51,6 +57,16 @@ return array(
 		'user'=>array(
 			'allowAutoLogin'=>true,
 			'loginUrl'=>array('site/login'),
+		),
+
+		'session'=>array(
+			'cookieMode'=>'only',
+			'cookieParams'=>array(
+				'path'=>'/',
+				'httponly'=>true,
+				'secure'=>$yaamp_https,
+				'samesite'=>'Lax',
+			),
 		),
 
 		'db'=>array(

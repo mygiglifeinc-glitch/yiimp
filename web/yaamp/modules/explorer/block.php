@@ -3,8 +3,9 @@ if (!$coin) return;
 
 $this->pageTitle = $coin->name . " block explorer";
 
-$txid = getparam('txid');
-$q = getparam('q');
+// hex only, both are echoed in the javascript below
+$txid = gethexparam('txid');
+$q = gethexparam('q');
 if (!empty($q) && ctype_xdigit($q)) $txid = $q;
 elseif (empty($txid)) $txid = 'txid not set'; // prevent highlight
 echo <<<END
@@ -84,7 +85,7 @@ function colorizeJson($json)
         if ($ts > 1400000000 && $ts < 1600000000)
         {
             $sfx = $matches[2][$n];
-            $date = strftime("<u>%Y-%m-%d %T %z</u>", $ts);
+            $date = date("<u>Y-m-d H:i:s O</u>", $ts);
             $json = str_replace(' ' . $m . $sfx, ' "' . $date . '"' . $sfx, $json);
         }
     }

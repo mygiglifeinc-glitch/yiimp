@@ -184,5 +184,6 @@ void pipe_hash(const char *input,char *output,unsigned int len)
     sph_blake512(&blakeCtx, hash1, 32);
     sph_blake512_close(&blakeCtx, (void *)hash5);
 
-    cpu_combine_hashes(output,hash2, hash3, hash4, hash5);
+    cpu_combine_hashes((uint32_t *)output, (const uint32_t *)hash2, (const uint32_t *)hash3,
+        (const uint32_t *)hash4, (const uint32_t *)hash5);
 }

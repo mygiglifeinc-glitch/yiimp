@@ -6,9 +6,7 @@ function doLiveCoinCancelOrder($pair = false, $id = false, $live = false)
 		return;
 	}
 
-	if (!$livecoin) {
-		$livecoin = new LiveCoinApi;
-	}
+	$livecoin = new LiveCoinApi;
 
 	$res = $livecoin->cancelLimitOrder($pair, $id);
 

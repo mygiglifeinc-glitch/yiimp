@@ -29,7 +29,7 @@ foreach ($markets as $m)
         $d = date('Y-m-d H:i', $histo->time);
         $series[$m['name']][] = array(
             $d,
-            (double)bitcoinvaluetoa($histo->price)
+            (float)bitcoinvaluetoa($histo->price)
         );
     }
 
@@ -38,12 +38,12 @@ foreach ($markets as $m)
         $d = date('Y-m-d H:i', $market->pricetime);
         $series[$m['name']][] = array(
             $d,
-            (double)bitcoinvaluetoa($market->price)
+            (float)bitcoinvaluetoa($market->price)
         );
     }
 
-    $min = min($min, (double)$m['min']);
-    $max = max($max, (double)$m['max']);
+    $min = min($min, (float)$m['min']);
+    $max = max($max, (float)$m['max']);
 }
 
 if ($min == 999999999)
@@ -59,7 +59,7 @@ foreach ($stats as $histo)
     $d = date('Y-m-d H:i', $histo->time);
     $series[YAAMP_SITE_NAME][] = array(
         $d,
-        (double)bitcoinvaluetoa($histo->price)
+        (float)bitcoinvaluetoa($histo->price)
     );
     $max = max($max, $histo->price);
 }
@@ -67,6 +67,6 @@ foreach ($stats as $histo)
 echo json_encode(array(
     'data' => array_values($series) ,
     'labels' => array_keys($series) ,
-    'rangeMin' => (double)($min * 0.95) ,
-    'rangeMax' => (double)($max * 1.05) ,
+    'rangeMin' => (float)($min * 0.95) ,
+    'rangeMax' => (float)($max * 1.05) ,
 ));

@@ -89,7 +89,7 @@ foreach ($allorders as $i => $order) $total_nicehash += $order['speed'];
 
 function cmp($a, $b)
 {
-    return $a['price'] < $b['price'];
+    return $b['price'] <=> $a['price'];
 }
 
 usort($allorders, 'cmp');

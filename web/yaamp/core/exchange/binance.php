@@ -74,7 +74,6 @@ function binance_api_user($method, $params=NULL)
 	if($res === false) {
 		$e = curl_error($ch);
 		debuglog("$exchange: $method $e");
-		curl_close($ch);
 		return false;
 	}
 
@@ -84,7 +83,6 @@ function binance_api_user($method, $params=NULL)
 		debuglog("$exchange: $method failed ($status) ".strip_data($res));
 	}
 
-	curl_close($ch);
 
 	return $result;
 }

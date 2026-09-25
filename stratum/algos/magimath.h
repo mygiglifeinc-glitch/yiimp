@@ -6,6 +6,7 @@
 #define MAGI_MATH_H
 
 #include <math.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -78,6 +78,7 @@ int test_merkle()
 
 	printf("mr: %s\n", mr.c_str());		// 82293f182d5db07d08acf334a5a907012bbb9990851557ac0ec028116081bd5a
 
+	return 0;
 }
 
 

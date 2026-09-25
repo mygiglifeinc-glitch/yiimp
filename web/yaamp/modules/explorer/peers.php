@@ -43,7 +43,7 @@ if (!empty($list)) foreach ($list as $peer)
 asort($addnode);
 
 echo '<pre>';
-echo implode("\n", $addnode);
+echo CHtml::encode(implode("\n", $addnode));
 echo '</pre>';
 
 echo '</div>';

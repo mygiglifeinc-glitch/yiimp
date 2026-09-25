@@ -43,7 +43,7 @@ foreach (yaamp_get_algos() as $algo)
 
 function cmp($a, $b)
 {
-    return $a[0] < $b[0];
+    return $b[0] <=> $a[0];
 }
 
 usort($algos, 'cmp');

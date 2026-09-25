@@ -1,7 +1,7 @@
 
 CC=gcc
 
-CFLAGS= -O3 -march=native
+CFLAGS= -O3 -march=native -std=gnu17 -MMD -MP
 LDFLAGS=-O2
 
 SOURCES=sph_jh.c sph_blake.c sph_bmw.c sph_groestl.c sph_skein.c sph_keccak.c sph_luffa.c sph_cubehash.c sph_shavite.c \
@@ -12,11 +12,11 @@ SOURCES=sph_jh.c sph_blake.c sph_bmw.c sph_groestl.c sph_skein.c sph_keccak.c sp
 OBJECTS=$(SOURCES:.c=.o)
 OUTPUT=libhash.a
 
-all: $(SOURCES) $(OUTPUT)
+all: $(OUTPUT)
 
 $(OUTPUT): $(OBJECTS)
-	ar rc $@ $(OBJECTS)
-	touch ../stratum.cpp
+	rm -f $@
+	ar rcs $@ $(OBJECTS)
 
 .cpp.o:
 	$(CC) $(CFLAGS) -c $<
@@ -24,10 +24,9 @@ $(OUTPUT): $(OBJECTS)
 .c.o:
 	$(CC) $(CFLAGS) -c $<
 
-blake2s.o: blake2s.c
-	$(CC) $(CFLAGS) -std=gnu99 -c $<
+-include $(OBJECTS:.o=.d)
 
 clean:
-	rm *.o
+	rm -f *.o *.d $(OUTPUT)
 
 

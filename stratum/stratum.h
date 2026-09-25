@@ -10,6 +10,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <inttypes.h>
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
@@ -19,6 +21,7 @@
 #include <errmsg.h>
 #include <ifaddrs.h>
 #include <dirent.h>
+#include <sys/random.h>
 
 #include <iostream>
 #include <vector>

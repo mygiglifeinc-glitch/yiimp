@@ -125,9 +125,9 @@ if (count($workers))
         $subscribe = Booltoa($worker->subscribe);
 
         echo '<tr class="ssrow">';
-        echo '<td title="' . $worker->version . '">' . $version . '</td>';
+        echo '<td title="' . CHtml::encode($worker->version) . '">' . CHtml::encode($version) . '</td>';
         if ($this->admin) echo "<td>{$worker->ip}</td>";
-        echo '<td title="' . $worker->password . '">' . $password . '</td>';
+        echo '<td title="' . CHtml::encode($worker->password) . '">' . CHtml::encode($password) . '</td>';
         echo '<td>' . $worker->algo . '</td>';
         echo '<td align="right">' . $worker->difficulty . '</td>';
         echo '<td align="right">' . $subscribe . '</td>';

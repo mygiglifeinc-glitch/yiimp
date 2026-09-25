@@ -92,7 +92,7 @@ foreach ($db_blocks as $db_block)
         if ($coin->block_time && $coin->mature_blocks)
         {
             $t = (int)($coin->mature_blocks - $db_block->confirmations) * $coin->block_time;
-            $eta = "ETA: " . sprintf('%dh %02dmn', ($t / 3600) , ($t / 60) % 60);
+            $eta = "ETA: " . sprintf('%dh %02dmn', ($t / 3600) , intdiv((int) $t, 60) % 60);
         }
         echo "<span title=\"$eta\">Immature ({$db_block->confirmations})</span>";
     }

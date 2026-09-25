@@ -300,7 +300,7 @@ class CoinCommand extends CConsoleCommand
             $confs = arraySafeVal($b, 'confirmations', 0);
             if ($confs <= 0 || !$b)
             {
-                $date = strftime("%Y-%m-%d %H:%M", arraySafeVal($b, 'time', $block->time));
+                $date = date("Y-m-d H:i", arraySafeVal($b, 'time', $block->time));
                 $height = arraySafeVal($b, 'height', $block->height);
                 $conf2 = $coin->block_height - $height;
                 echo arraySafeVal($b, 'height') . " $confs/$conf2 $date\n";
@@ -376,7 +376,7 @@ class CoinCommand extends CConsoleCommand
                 {
                     $time = round($tx['time'] / 900) * 900;
                     if ($time < time() - 2 * 24 * 3600) continue;
-                    echo strftime("%Y-%m-%d %H:%M", $tx['time']) . " $time missed block $height : " . json_encode($tx) . "\n";
+                    echo date("Y-m-d H:i", $tx['time']) . " $time missed block $height : " . json_encode($tx) . "\n";
                     $data = getdbolist('db_hashuser', 'algo=:algo AND time=' . $time, array(
                         ':algo' => $coin->algo
                     ));
@@ -430,7 +430,7 @@ class CoinCommand extends CConsoleCommand
         }
         $res = coin_set($symbol, $key, $value);
         $val = coin_get($symbol, $key);
-        echo ($res ? "$symbol $exchange $key " . json_encode($val) : "error") . "\n";
+        echo ($res ? "$symbol $key " . json_encode($val) : "error") . "\n";
         return 0;
     }
 

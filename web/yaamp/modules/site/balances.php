@@ -1,5 +1,6 @@
 <?php
 $exch = getparam('exch');
+$exch = is_string($exch) ? preg_replace('/[^A-Za-z0-9 _.\-]/', '', $exch) : ''; // echoed in js
 echo getAdminSideBarLinks();
 
 $this->pageTitle = "Balances - $exch";
