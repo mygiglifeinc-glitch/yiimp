@@ -22,6 +22,7 @@ SOURCES=lyra2re.c lyra2v2.c lyra2v3.c Lyra2.c lyra2z.c Lyra2-z.c lyra2zz.c Lyra2
 	hive.c pomelo.c hex.c argon2m.c argon2d.c geek.c balloon.c \
 	phi.c phi2.c polytimos.c rainforest.c skunk.c sib.c veltor.c gost.c aergo.c x20r.c x21s.c lbk3.c pipehash.c gltalgos.c \
 	yespower/yespower-platform.c yespower/yespower-combined.c sha256-P.c dedal.c phi1612.c bcd.c \
+	sha512256d.c sha3_256t.c verthash.c \
 
 OBJECTS=$(patsubst %.cpp,%.o,$(SOURCES:.c=.o))
 OUTPUT=libalgos.a

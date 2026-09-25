@@ -295,6 +295,18 @@ static void client_do_submit(YAAMP_CLIENT *client, YAAMP_JOB *job, YAAMP_JOB_VAL
 
 			string_be(doublehash2, hash1);
 
+			// coins whose block id is not the sha256d of the header
+			if(!strcmp(g_stratum_algo, "sha512256d") || !strcmp(g_stratum_algo, "sha3-256t")) {
+				// RXD, BC3: the block id is the pow hash
+				strcpy(hash1, submitvalues->hash_be);
+			} else if(!strcmp(g_stratum_algo, "power2b")) {
+				// MBC: the block id is blake2b-256 of the header
+				unsigned char idx[32];
+				blake2b_hash((char *)submitvalues->header_bin, (char *)idx, 80);
+				hexlify(doublehash2, idx, 32);
+				string_be(doublehash2, hash1);
+			}
+
 			if(coind->usegetwork && !strcmp("DCR", coind->rpcencoding)) {
 				// no merkle stuff
 				strcpy(hash1, submitvalues->hash_hex);
