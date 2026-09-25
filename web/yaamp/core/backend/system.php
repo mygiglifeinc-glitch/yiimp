@@ -73,7 +73,7 @@ function marketHistoryPrune($symbol = "")
 
     // Prune records older than 1 week, one max per hour
     $delay7D   = time() - 7 * 24 * 60 * 60;
-    $sqlFilter = (!empty($symbol)) ? "AND C.symbol='$symbol'" : '';
+    $sqlFilter = (!empty($symbol)) ? "AND C.symbol=".sqlQuote($symbol) : '';
     $prune     = dbolist("SELECT idcoin, idmarket,
         AVG(MH.price) AS price, AVG(MH.price2) AS price2, MAX(MH.balance) AS balance,
         MIN(MH.id) AS firstid, COUNT(MH.id) AS nbrecords, (MH.time DIV 3600) AS ival

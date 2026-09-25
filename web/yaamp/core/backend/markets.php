@@ -45,7 +45,7 @@ function BackendPricesUpdate()
         $list = getdbolist('db_markets', "coinid=$coin->id");
         foreach ($list as $market)
         {
-            $market2 = getdbosql('db_markets', "coinid=$coin2->id and name='$market->name'");
+            $market2 = getdbosql('db_markets', "coinid=$coin2->id and name=:name", array(':name'=>$market->name));
             if (!$market2) continue;
 
             $market2->price = $market->price;
@@ -251,7 +251,7 @@ function updateBleutradeMarkets()
         //	debuglog($currency);
         if ($currency->Currency == 'BTC') continue;
 
-        $coin = getdbosql('db_coins', "symbol='{$currency->Currency}'");
+        $coin = getdbosql('db_coins', "symbol=:symbol", array(':symbol'=>$currency->Currency));
         if (!$coin) continue;
 
         $market = getdbosql('db_markets', "coinid={$coin->id} and name='$exchange'");
@@ -333,7 +333,7 @@ function updateBitzMarkets($force = false)
             $market->disabled = 1;
             $market->message = 'disabled from settings';
         }
-        $coin = getdbosql('db_coins', "symbol='{$symbol}'");
+        $coin = getdbosql('db_coins', "symbol=:symbol", array(':symbol'=>$symbol));
         if (!$coin) continue;
         if (!$coin->installed && !$coin->watch) continue;
         $market = getdbosql('db_markets', "coinid={$coin->id} and name='{$exchange}'");
@@ -377,7 +377,7 @@ function updateCryptoBridgeMarkets($force = false)
             $market->message = 'disabled from settings';
         }
 
-        $coin = getdbosql('db_coins', "symbol='{$symbol}'");
+        $coin = getdbosql('db_coins', "symbol=:symbol", array(':symbol'=>$symbol));
         if (!$coin) continue;
         if (!$coin->installed && !$coin->watch) continue;
 
@@ -419,7 +419,7 @@ function updateEscoDexMarkets($force = false)
             $market->message = 'disabled from settings';
         }
 
-        $coin = getdbosql('db_coins', "symbol='{$symbol}'");
+        $coin = getdbosql('db_coins', "symbol=:symbol", array(':symbol'=>$symbol));
         if (!$coin) continue;
         if (!$coin->installed && !$coin->watch) continue;
         $market = getdbosql('db_markets', "coinid={$coin->id} and name='{$exchange}'");
@@ -567,7 +567,7 @@ function updateKrakenMarkets($force = false)
         ))) continue;
         if (strpos($symbol, '.d') !== false) continue;
 
-        $coin = getdbosql('db_coins', "symbol='{$symbol}'");
+        $coin = getdbosql('db_coins', "symbol=:symbol", array(':symbol'=>$symbol));
         if (!$coin) continue;
         if (!$coin->installed && !$coin->watch) continue;
 
@@ -739,7 +739,7 @@ function updateCCexMarkets()
                 ':base' => $base_symbol
             ));
             if (!$in_db) continue;
-            $sqlFilter = "AND base_coin='$base_symbol'";
+            $sqlFilter = "AND base_coin=".sqlQuote($base_symbol);
         }
 
         $coin = getdbosql('db_coins', "symbol=:symbol", array(
@@ -945,7 +945,7 @@ function updateYobitMarkets()
                 ':base' => $base_symbol
             ));
             if (!$in_db) continue;
-            $sqlFilter = "AND base_coin='$base_symbol'";
+            $sqlFilter = "AND base_coin=".sqlQuote($base_symbol);
         }
 
         $market = getdbosql('db_markets', "coinid={$coin->id} AND name LIKE '$exchange%' $sqlFilter");
@@ -1188,7 +1188,7 @@ function updateCrex24Markets()
         if (!empty($market->base_coin))
         {
             $pair = strtoupper($symbol . '-' . $market->base_coin);
-            $sqlFilter = "AND base_coin='{$market->base_coin}'";
+            $sqlFilter = "AND base_coin=".sqlQuote($market->base_coin);
         }
 
         if (market_get($exchange, $symbol, "disabled"))
@@ -1251,7 +1251,7 @@ function updateCryptopiaMarkets()
         if (!empty($market->base_coin))
         {
             $pair = strtoupper($symbol . '/' . $market->base_coin);
-            $sqlFilter = "AND base_coin='{$market->base_coin}'";
+            $sqlFilter = "AND base_coin=".sqlQuote($market->base_coin);
         }
 
         if (market_get($exchange, $symbol, "disabled"))
@@ -1367,7 +1367,7 @@ function updateHitBTCMarkets()
         {
             $base = $market->base_coin;
             $pair = strtoupper($market->base_coin . $symbol);
-            $sqlFilter = "AND base_coin='{$market->base_coin}'";
+            $sqlFilter = "AND base_coin=".sqlQuote($market->base_coin);
         }
 
         if (market_get($exchange, $symbol, "disabled", false, $base))
@@ -1449,7 +1449,7 @@ function updateNovaMarkets()
         {
             $base = $market->base_coin;
             $pair = strtoupper($market->base_coin . '_' . $symbol);
-            $sqlFilter = "AND base_coin='{$market->base_coin}'";
+            $sqlFilter = "AND base_coin=".sqlQuote($market->base_coin);
         }
 
         if (market_get($exchange, $symbol, "disabled", false, $base))

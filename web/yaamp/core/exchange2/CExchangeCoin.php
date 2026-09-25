@@ -24,7 +24,7 @@ abstract class CExchangeCoin
 		$this->coin = $coin;
 		$this->marketname = $marketname;
 
-		$this->market = getdbosql('db_markets', "coinid=$coin->id and name='$marketname'");
+		$this->market = getdbosql('db_markets', "coinid=$coin->id and name=:name", array(':name'=>$marketname));
 		if(!$this->market) return;
 	}
 

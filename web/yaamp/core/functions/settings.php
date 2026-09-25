@@ -228,7 +228,7 @@ $cacheset_coin = array();
 function coin_settings_prefetch($symbol)
 {
 	global $cacheset_coin;
-	$settings = dbocolumn("SELECT param FROM settings WHERE param LIKE 'coin-{$symbol}-%'");
+	$settings = dbocolumn("SELECT param FROM settings WHERE param LIKE :prefix", array(':prefix'=>"coin-{$symbol}-%"));
 	if (!$settings) return array();
 	foreach ($settings as $key) {
 		$cacheset_coin[$key] = settings_get($key);
