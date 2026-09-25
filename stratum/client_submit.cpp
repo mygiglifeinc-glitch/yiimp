@@ -276,6 +276,9 @@ static void client_do_submit(YAAMP_CLIENT *client, YAAMP_JOB *job, YAAMP_JOB_VAL
 			YAAMP_HASH_FUNCTION merkle_hash = sha256_double_hash_hex;
 			//if (g_current_algo->merkle_func)
 			//	merkle_hash = g_current_algo->merkle_func;
+			// Kylacoin/Lyncoin: the block id is sha3d of the header, like their txids
+			if (g_current_algo->merkle_func == sha3d_hash_hex)
+				merkle_hash = sha3d_hash_hex;
 
 			merkle_hash((char *)submitvalues->header_bin, doublehash2, strlen(submitvalues->header_be)/2);
 
