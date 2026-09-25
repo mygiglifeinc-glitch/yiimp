@@ -21,6 +21,19 @@ light cache of the current and next epoch of each coin in memory (16 MB + 128 KB
 for RVN or FIRO today, ~145 MB for MEWC) and verifies each share from it (~20 ms of CPU).
 Share difficulty 1 is ~2^32 hashes, like a sha256 share: the algos need no web hashrate factor.
 
+### Zcash family stratums
+
+`equihash` (200,9: ZEC, KMD, ARRR...), `equihash144` (144,5: BTG, BTCZ, GLINK...) and
+`equihash192` (192,7: YEC, ZCL, ZER...) use the ZIP-301 stratum of the Equihash miners (lolMiner,
+GMiner, miniZ...), ports 9600-9602; `yespowerRES` (Resistance) uses the Bitcoin stratum of its
+miner with a 140 byte header, port 9650. No extra build dependency. The Zcash daemons build the
+coinbase (founders reward, funding streams...) and pay their `mineraddress` (zcashd) or a wallet
+key; Bitcoin Gold needs segwit enabled on the coin. The Equihash parameters and the BLAKE2b
+personalization can be set per stratum and per coin in the .conf (`equihash_n`, `equihash_k`,
+`equihash_personalization`, `[EQUIHASH]` section), e.g. 48,5 for the zcashd regtest. Share
+difficulty 1 is 8192 solutions (target 0x0007ffff..): the web hashrate constant of the equihash
+algos is 2^23 (Sol/s) instead of 2^42.
+
 Coins can be given their own stratum port with the *Dedicated Port* setting on the coin page;
 the old `multi-port` branch is no longer needed.
 
