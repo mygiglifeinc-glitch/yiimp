@@ -116,12 +116,13 @@ YAAMP_ALGO g_algos[] =
 	{"blake", blake_hash, 1, 0 },
 	{"blake2b", blake2b_hash, 1, 0 },
 	{"blake2s", blake2s_hash, 1, 0 },
+	{"blake3", blake3_hash, 1, 0 }, /* raw BLAKE3-256 of the header */
 	{"blakecoin", blakecoin_hash, 1 /*0x100*/, 0, sha256_hash_hex },
 	{"bmw", bmw_hash, 1, 0, 0},
 	{"bmw512", bmw512_hash, 0x100, 0, 0},
 	{"c11", c11_hash, 1, 0, 0},
 	{"cpupower", cpupower_hash, 0x10000, 0, 0}, // CPUchain (CPU)
-	{"decred", decred_hash, 1, 0 },
+	{"decred", decred_hash, 1, 0 }, /* BLAKE3 since DCP-0011 (block 794368) */
 	{"dedal", dedal_hash, 0x100, 0, 0},
 	{"deep", deep_hash, 1, 0, 0},
 	{"dmd-gr", groestl_hash, 0x100, 0, 0}, /* diamond (double groestl) */
