@@ -12,17 +12,21 @@ void socket_real_ip(YAAMP_SOCKET *s)
 	// https://www.haproxy.org/download/1.8/doc/proxy-protocol.txt
 	int size, ret;
 	const char v2sig[] = "\x0D\x0A\x0D\x0A\x00\x0D\x0A\x51\x55\x49\x54\x0A";
+	// must be local: client threads run concurrently
+	union yaamp_proxy_hdr hdr;
+	memset(&hdr, 0, sizeof(hdr));
 
 	do {
 		ret = recv(s->sock, &hdr, sizeof(hdr), MSG_PEEK);
 	} while (ret == -1 && errno == EINTR);
 
-	if (ret >= (16 + ntohs(hdr.v2.len)) &&
+	if (ret >= 16 && ret >= (16 + ntohs(hdr.v2.len)) &&
+		(16 + ntohs(hdr.v2.len)) <= (int) sizeof(hdr) &&
 		memcmp(&hdr.v2, v2sig, 12) == 0 &&
 		((hdr.v2.ver_cmd & 0xF0) == 0x20) &&
 		hdr.v2.fam == 0x11) {
 		// we received a proxy v2 header
-		inet_ntop(AF_INET, &hdr.v2.addr.ip4.src_addr, s->ip, 64);
+		inet_ntop(AF_INET, &hdr.v2.addr.ip4.src_addr, s->ip, sizeof(s->ip));
 		s->port = ntohs(hdr.v2.addr.ip4.src_port);
 
 		// we need to consume the appropriate amount of data from the socket
@@ -203,8 +207,15 @@ int socket_send(YAAMP_SOCKET *s, const char *format, ...)
 	va_list args;
 
 	va_start(args, format);
-	vsprintf(buffer, format, args);
+	int len = vsnprintf(buffer, sizeof(buffer), format, args);
 	va_end(args);
+	if(len < 0) return -1;
+	if(len >= (int) sizeof(buffer)) {
+		// never send a truncated json message
+		debuglog("socket_send: message too long (%d)\n", len);
+		errno = EMSGSIZE;
+		return -1;
+	}
 
 	if(!s) {
 		errno = EINVAL;

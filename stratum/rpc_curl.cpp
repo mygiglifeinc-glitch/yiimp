@@ -388,7 +388,7 @@ static json_value *rpc_curl_do_call(YAAMP_RPC *rpc, char const *data)
 
 	char url[1024];
 	int curl_err = 0;
-	sprintf(url, "http%s://%s:%d", rpc->ssl?"s":"", rpc->host, rpc->port);
+	snprintf(url, sizeof(url), "http%s://%s:%d", rpc->ssl?"s":"", rpc->host, rpc->port);
 	strcpy(curl_last_err, "");
 
 	json_value *res = curl_json_rpc(rpc, url, data, &curl_err);

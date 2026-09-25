@@ -57,7 +57,7 @@ void a5a_hash(const char* input, char* output, uint32_t len)
     nnNonce2 = (int)(pdata[19]/2);
     size_t sz = 80;
     uint8_t bhash[5][64];
-    uint32_t hash[6];
+    uint32_t hash[8]; // sha256 output (was [6]: stack overflow)
     memset(bhash, 0, 5 * 64);
 
     sph_sha256_context       ctx_final_sha256;

@@ -101,7 +101,7 @@ int rpc_send(YAAMP_RPC *rpc, const char *format, ...)
 	va_list args;
 
 	va_start(args, format);
-	vsprintf(buffer, format, args);
+	vsnprintf(buffer, sizeof(buffer), format, args);
 	va_end(args);
 
 	int bytes = strlen(buffer);

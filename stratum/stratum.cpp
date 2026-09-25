@@ -209,6 +209,13 @@ YAAMP_ALGO *stratum_find_algo(const char *name)
 
 ////////////////////////////////////////////////////////////////////////////////////////
 
+// copy a config string, missing keys give an empty string
+static void config_string(char *dst, size_t size, dictionary *ini, const char *key)
+{
+	const char *value = iniparser_getstring(ini, key, NULL);
+	snprintf(dst, size, "%s", value ? value : "");
+}
+
 int main(int argc, char **argv)
 {
 	if(argc < 2)
@@ -228,7 +235,7 @@ int main(int argc, char **argv)
 #endif
 
 	char configfile[1024];
-	sprintf(configfile, "%s.conf", argv[1]);
+	snprintf(configfile, sizeof(configfile), "%s.conf", argv[1]);
 
 	dictionary *ini = iniparser_load(configfile);
 	if(!ini)
@@ -238,22 +245,20 @@ int main(int argc, char **argv)
 	}
 
 	g_tcp_port = iniparser_getint(ini, "TCP:port", 3333);
-	strcpy(g_tcp_server, iniparser_getstring(ini, "TCP:server", NULL));
-	strcpy(g_tcp_password, iniparser_getstring(ini, "TCP:password", NULL));
+	config_string(g_tcp_server, sizeof(g_tcp_server), ini, "TCP:server");
+	config_string(g_tcp_password, sizeof(g_tcp_password), ini, "TCP:password");
 
-	strcpy(g_sql_host, iniparser_getstring(ini, "SQL:host", NULL));
-	strcpy(g_sql_database, iniparser_getstring(ini, "SQL:database", NULL));
-	strcpy(g_sql_username, iniparser_getstring(ini, "SQL:username", NULL));
-	strcpy(g_sql_password, iniparser_getstring(ini, "SQL:password", NULL));
+	config_string(g_sql_host, sizeof(g_sql_host), ini, "SQL:host");
+	config_string(g_sql_database, sizeof(g_sql_database), ini, "SQL:database");
+	config_string(g_sql_username, sizeof(g_sql_username), ini, "SQL:username");
+	config_string(g_sql_password, sizeof(g_sql_password), ini, "SQL:password");
 	g_sql_port = iniparser_getint(ini, "SQL:port", 3306);
 
 	// optional coin filters (to mine only one on a special port or a test instance)
-	char *coin_filter = iniparser_getstring(ini, "WALLETS:include", NULL);
-	strcpy(g_stratum_coin_include, coin_filter ? coin_filter : "");
-	coin_filter = iniparser_getstring(ini, "WALLETS:exclude", NULL);
-	strcpy(g_stratum_coin_exclude, coin_filter ? coin_filter : "");
+	config_string(g_stratum_coin_include, sizeof(g_stratum_coin_include), ini, "WALLETS:include");
+	config_string(g_stratum_coin_exclude, sizeof(g_stratum_coin_exclude), ini, "WALLETS:exclude");
 
-	strcpy(g_stratum_algo, iniparser_getstring(ini, "STRATUM:algo", NULL));
+	config_string(g_stratum_algo, sizeof(g_stratum_algo), ini, "STRATUM:algo");
 	g_stratum_difficulty = iniparser_getdouble(ini, "STRATUM:difficulty", 16);
 	g_stratum_nicehash_difficulty = iniparser_getdouble(ini, "STRATUM:nicehash", 16);
 	g_stratum_min_diff = iniparser_getdouble(ini, "STRATUM:diff_min", g_stratum_difficulty/2);
@@ -411,6 +416,7 @@ void *monitor_thread(void *p)
 			}
 		}
 	}
+	return NULL;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -464,8 +470,10 @@ void *stratum_thread(void *p)
 			close(sock);
 			g_exiting = true;
 			stratumlog("%s pthread_create error %d %d\n", g_stratum_algo, res, error);
+			continue;
 		}
 
 		pthread_detach(thread);
 	}
+	return NULL;
 }
