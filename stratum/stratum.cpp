@@ -42,6 +42,12 @@ bool g_stratum_reconnect;
 bool g_stratum_renting;
 bool g_stratum_segwit = false;
 
+// Multi-algo chains select the PoW by bits of the block version: getblocktemplate may
+// need to be told the algo ("powalgo") and the header must carry the algo bits.
+char g_stratum_gbt_powalgo[64];
+uint32_t g_stratum_version_mask = 0;
+uint32_t g_stratum_version_bits = 0;
+
 int g_limit_txs_per_block = 0;
 
 bool g_handle_haproxy_ips = false;
@@ -202,6 +208,23 @@ YAAMP_ALGO g_algos[] =
 
 YAAMP_ALGO *g_current_algo = NULL;
 
+// Default block version rules, can be overridden in the .conf ([STRATUM] powalgo,
+// version_mask, version_bits; version_mask = 0 disables the rule).
+static const struct {
+	const char *algo;
+	const char *gbt_powalgo;	// value of the "powalgo" getblocktemplate request key
+	uint32_t version_mask;
+	uint32_t version_bits;
+} g_algo_version_rules[] = {
+	// Litecoin Cash, Maza, Avian, Pulsar, Cascoin, Obidoge...: POW_TYPE = (nVersion >> 16) & 0xFF,
+	// MinotaurX = 1 (primitives/block.h GetPoWType, miner.cpp "nVersion |= powType << 16"),
+	// and getblocktemplate takes {"powalgo":"minotaurx"} (else the -powalgo default is used)
+	{ "minotaurx", "minotaurx", 0x00FF0000, 0x00010000 },
+	// Kylacoin, Lyncoin: blocks after nFlexhashHeight need nVersion & 0x8000 (pow.cpp, validation.cpp)
+	{ "flex", "", 0x00008000, 0x00008000 },
+	{ NULL, NULL, 0, 0 }
+};
+
 YAAMP_ALGO *stratum_find_algo(const char *name)
 {
 	for(int i=0; g_algos[i].name[0]; i++)
@@ -263,6 +286,20 @@ int main(int argc, char **argv)
 	config_string(g_stratum_coin_exclude, sizeof(g_stratum_coin_exclude), ini, "WALLETS:exclude");
 
 	config_string(g_stratum_algo, sizeof(g_stratum_algo), ini, "STRATUM:algo");
+
+	for(int i=0; g_algo_version_rules[i].algo; i++) {
+		if(strcmp(g_algo_version_rules[i].algo, g_stratum_algo)) continue;
+		snprintf(g_stratum_gbt_powalgo, sizeof(g_stratum_gbt_powalgo), "%s", g_algo_version_rules[i].gbt_powalgo);
+		g_stratum_version_mask = g_algo_version_rules[i].version_mask;
+		g_stratum_version_bits = g_algo_version_rules[i].version_bits;
+	}
+	if(iniparser_getstring(ini, "STRATUM:powalgo", NULL))
+		config_string(g_stratum_gbt_powalgo, sizeof(g_stratum_gbt_powalgo), ini, "STRATUM:powalgo");
+	const char *vmask = iniparser_getstring(ini, "STRATUM:version_mask", NULL);
+	const char *vbits = iniparser_getstring(ini, "STRATUM:version_bits", NULL);
+	if(vmask) g_stratum_version_mask = (uint32_t) strtoul(vmask, NULL, 0);
+	if(vbits) g_stratum_version_bits = (uint32_t) strtoul(vbits, NULL, 0);
+	g_stratum_version_bits &= g_stratum_version_mask;
 	g_stratum_difficulty = iniparser_getdouble(ini, "STRATUM:difficulty", 16);
 	g_stratum_nicehash_difficulty = iniparser_getdouble(ini, "STRATUM:nicehash", 16);
 	g_stratum_min_diff = iniparser_getdouble(ini, "STRATUM:diff_min", g_stratum_difficulty/2);
