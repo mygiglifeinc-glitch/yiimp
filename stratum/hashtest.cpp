@@ -4,7 +4,8 @@
 //   ./hashtest > new.txt; diff old.txt new.txt
 //
 // Checks sha256d against the bitcoin genesis block hash, runs the known-answer
-// tests (real block headers, see kats[] below) and prints the hash of a fixed
+// tests (real block headers, see kats[] below; the verthash one only when
+// VERTHASH_DATAFILE points to verthash.dat) and prints the hash of a fixed
 // header for every algo of the stratum, so that the output of two builds
 // (compiler, flags, library changes...) can be compared.
 
@@ -110,6 +111,7 @@ static const struct test_algo algos[] = {
 	{ "vanilla", blakecoin_hash },
 	{ "veltor", veltor_hash },
 	{ "velvet", velvet_hash },
+	{ "verthash", verthash_hash }, // needs the data file, see main()
 	{ "vitalium", vitalium_hash },
 	{ "whirlcoin", whirlpool_hash },
 	{ "whirlpool", whirlpool_hash },
@@ -217,6 +219,15 @@ static const struct kat kats[] = {
 	{ NULL, NULL, NULL }
 };
 
+// Vertcoin block 2686000 (sha256d 70ba0199...a320), nBits 1c0be894;
+// verthash result checked to be below the target (36 zero bits)
+static const char verthash_header[] =
+	"000000200b0de86e752241c8f7cb517d3d6b36a51ea2b181492a16f4a02d0abb3705f6ad"
+	"6ab2221872da74582f7513c9b2de733eb5b50c86acf936a37be2ba2de2e71a7fa5c2b46a"
+	"94e80b1ce43faa00";
+static const char verthash_hash_be[] =
+	"0000000007e8dbfaab43d82179f0835cbd44907ab696e9e12be76f9682346542";
+
 static YAAMP_HASH_FUNCTION find_algo(const char *name);
 
 static void from_hex(const char *hex, unsigned char *bin, int len)
@@ -277,6 +288,29 @@ static int run_kats(const char *only)
 		} else {
 			printf("OK   %s KAT\n", kats[k].algo);
 		}
+	}
+
+	// verthash needs the 1.2 GB data file: VERTHASH_DATAFILE=/path ./hashtest
+	const char *vh = getenv("VERTHASH_DATAFILE");
+	if (only && strcmp(only, "verthash")) vh = NULL;
+	if (vh && *vh) {
+		char err[512];
+		if (verthash_load_datafile(vh, 1, err, sizeof(err))) {
+			printf("FAIL verthash data file: %s\n", err);
+			errors++;
+		} else {
+			from_hex(verthash_header, input, 80);
+			verthash_hash((const char *) input, (char *) output, 80);
+			to_hex_be(output, 32, hex);
+			if (strcmp(hex, verthash_hash_be)) {
+				printf("FAIL verthash KAT: %s\n", hex);
+				errors++;
+			} else {
+				printf("OK   verthash KAT\n");
+			}
+		}
+	} else if (!only || !strcmp(only, "verthash")) {
+		printf("SKIP verthash KAT (set VERTHASH_DATAFILE)\n");
 	}
 
 	return errors;

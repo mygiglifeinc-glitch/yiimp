@@ -67,13 +67,17 @@ $(OUTPUT): $(OBJECTS) $(LIBS)
 hashtest: hashtest.o $(LIBS)
 	$(CXX) $(LDFLAGS) hashtest.o $(LIBS) $(shell pkg-config --libs libcrypto 2>/dev/null || echo -lcrypto) -lpthread -lgmp -lm -o $@
 
+# verthash.dat generator for the verthash stratum: make verthash_gen && ./verthash_gen <file>
+verthash_gen: verthash_gen.c algos/verthash.h
+	$(CC) -O2 -std=gnu17 -o $@ verthash_gen.c $(shell pkg-config --libs libcrypto 2>/dev/null || echo -lcrypto)
+
 .cpp.o:
 	$(CXX) $(CFLAGS) $(CXXFLAGS) $(SQLFLAGS) -c $<
 
 -include $(OBJECTS:.o=.d) hashtest.d
 
 clean:
-	rm -f *.o *.d $(OUTPUT) hashtest
+	rm -f *.o *.d $(OUTPUT) hashtest verthash_gen
 	$(MAKE) -C algos clean
 	$(MAKE) -C sha3 clean
 	$(MAKE) -C iniparser clean

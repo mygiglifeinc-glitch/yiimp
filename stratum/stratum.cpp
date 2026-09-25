@@ -29,6 +29,7 @@ char g_stratum_coin_include[256];
 char g_stratum_coin_exclude[256];
 
 char g_stratum_algo[256];
+char g_verthash_datafile[1024];
 double g_stratum_difficulty;
 double g_stratum_nicehash_difficulty;
 double g_stratum_nicehash_min_diff;
@@ -172,6 +173,7 @@ YAAMP_ALGO g_algos[] =
 	{"vanilla", blakecoin_hash, 1, 0 },
 	{"veltor", veltor_hash, 1, 0, 0},
 	{"velvet", velvet_hash, 0x10000, 0, 0},
+	{"verthash", verthash_hash, 0x100, 0, 0}, // Vertcoin (VTC), needs verthash.dat; miners use target factor 256
 	{"vitalium", vitalium_hash, 1, 0, 0},
 	{"whirlcoin", whirlpool_hash, 1, 0, sha256_hash_hex }, /* old sha merkleroot */
 	{"whirlpool", whirlpool_hash, 1, 0 }, /* sha256d merkleroot */
@@ -276,6 +278,9 @@ int main(int argc, char **argv)
 	config_string(g_stratum_coin_exclude, sizeof(g_stratum_coin_exclude), ini, "WALLETS:exclude");
 
 	config_string(g_stratum_algo, sizeof(g_stratum_algo), ini, "STRATUM:algo");
+	config_string(g_verthash_datafile, sizeof(g_verthash_datafile), ini, "STRATUM:verthash_datafile");
+	if(!g_verthash_datafile[0])
+		strcpy(g_verthash_datafile, "/home/crypto-data/yiimp/site/stratum/verthash.dat");
 	g_stratum_difficulty = iniparser_getdouble(ini, "STRATUM:difficulty", 16);
 	g_stratum_nicehash_difficulty = iniparser_getdouble(ini, "STRATUM:nicehash", 16);
 	g_stratum_min_diff = iniparser_getdouble(ini, "STRATUM:diff_min", g_stratum_difficulty/2);
@@ -306,6 +311,14 @@ int main(int argc, char **argv)
 
 	if(!g_current_algo) yaamp_error("invalid algo");
 	if(!g_current_algo->hash_function) yaamp_error("no hash function");
+
+	if(!strcmp(g_current_algo->name, "verthash")) {
+		// the ~1.2 GB data file is mapped once and shared by all threads
+		char err[1024];
+		stratumlogdate("loading and checking verthash data file %s\n", g_verthash_datafile);
+		if(verthash_load_datafile(g_verthash_datafile, 1, err, sizeof(err)))
+			yaamp_error(err);
+	}
 
 //	struct rlimit rlim_files = {0x10000, 0x10000};
 //	setrlimit(RLIMIT_NOFILE, &rlim_files);
