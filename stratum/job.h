@@ -68,6 +68,13 @@ struct YAAMP_JOB_TEMPLATE
 	
 	bool needpriceinfo;
 	char priceinfo[1024];	
+
+	// non Bitcoin stratum protocols (protocol.h): per job data set by template_prepare()
+	char proto_header[512];         // serialized header part hashed by the protocol (hex)
+	char proto_coinbase[8*1024+64]; // complete coinbase (hex)
+	char proto_hash[80];            // kawpow: header hash sent to the miners
+	char proto_seed[80];            // kawpow: epoch seed hash
+	char proto_target[80];          // block target, 64 hex digits (big endian)
 };
 
 #define YAAMP_JOB_MAXSUBIDS		200
