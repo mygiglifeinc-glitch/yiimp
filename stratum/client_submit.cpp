@@ -9,11 +9,11 @@ uint64_t lyra2z_height = 0;
 void build_submit_values(YAAMP_JOB_VALUES *submitvalues, YAAMP_JOB_TEMPLATE *templ,
 	const char *nonce1, const char *nonce2, const char *ntime, const char *nonce)
 {
-	sprintf(submitvalues->coinbase, "%s%s%s%s", templ->coinb1, nonce1, nonce2, templ->coinb2);
+	snprintf(submitvalues->coinbase, sizeof(submitvalues->coinbase), "%s%s%s%s", templ->coinb1, nonce1, nonce2, templ->coinb2);
 	int coinbase_len = strlen(submitvalues->coinbase);
 
-	unsigned char coinbase_bin[1024];
-	memset(coinbase_bin, 0, 1024);
+	unsigned char coinbase_bin[sizeof(submitvalues->coinbase)/2 + 1];
+	memset(coinbase_bin, 0, sizeof(coinbase_bin));
 	binlify(coinbase_bin, submitvalues->coinbase);
 
 	char doublehash[128];
@@ -29,29 +29,30 @@ void build_submit_values(YAAMP_JOB_VALUES *submitvalues, YAAMP_JOB_TEMPLATE *tem
 	ser_string_be(merkleroot.c_str(), submitvalues->merkleroot_be, 8);
 
 	if(templ->isbitcash) {
-		sprintf(submitvalues->coinbase, "%s%s%s%s", templ->coinforsubmitb1, nonce1, nonce2, templ->coinforsubmitb2);
+		snprintf(submitvalues->coinbase, sizeof(submitvalues->coinbase), "%s%s%s%s", templ->coinforsubmitb1, nonce1, nonce2, templ->coinforsubmitb2);
 	}
 
 #ifdef MERKLE_DEBUGLOG
 	printf("merkle root %s\n", merkleroot.c_str());
 #endif
 	if (!strcmp(g_stratum_algo, "lbry")) {
-		sprintf(submitvalues->header, "%s%s%s%s%s%s%s", templ->version, templ->prevhash_be, submitvalues->merkleroot_be,
+		snprintf(submitvalues->header, sizeof(submitvalues->header), "%s%s%s%s%s%s%s", templ->version, templ->prevhash_be, submitvalues->merkleroot_be,
 			templ->claim_be, ntime, templ->nbits, nonce);
 		ser_string_be(submitvalues->header, submitvalues->header_be, 112/4);
 	} else if (strlen(templ->extradata_be) == 128) { // LUX SC
-		sprintf(submitvalues->header, "%s%s%s%s%s%s%s", templ->version, templ->prevhash_be, submitvalues->merkleroot_be,
+		snprintf(submitvalues->header, sizeof(submitvalues->header), "%s%s%s%s%s%s%s", templ->version, templ->prevhash_be, submitvalues->merkleroot_be,
 			ntime, templ->nbits, nonce, templ->extradata_be);
 		ser_string_be(submitvalues->header, submitvalues->header_be, 36); // 80+64 / sizeof(u32)
 	} else if (templ->needpriceinfo)
 	{
-		sprintf(submitvalues->header, "%s%s%s%s%s%s", templ->version, templ->prevhash_be, submitvalues->merkleroot_be,
+		snprintf(submitvalues->header, sizeof(submitvalues->header), "%s%s%s%s%s%s", templ->version, templ->prevhash_be, submitvalues->merkleroot_be,
 			ntime, templ->nbits, nonce);
 		ser_string_be(submitvalues->header, submitvalues->header_be, 20);
-		sprintf(submitvalues->header_be, "%s%s", submitvalues->header_be, templ->priceinfo);
+		strncat(submitvalues->header_be, templ->priceinfo,
+			sizeof(submitvalues->header_be) - strlen(submitvalues->header_be) - 1);
 	} else
 	{
-		sprintf(submitvalues->header, "%s%s%s%s%s%s", templ->version, templ->prevhash_be, submitvalues->merkleroot_be,
+		snprintf(submitvalues->header, sizeof(submitvalues->header), "%s%s%s%s%s%s", templ->version, templ->prevhash_be, submitvalues->merkleroot_be,
 			ntime, templ->nbits, nonce);
 		ser_string_be(submitvalues->header, submitvalues->header_be, 20);
 	}
@@ -117,11 +118,11 @@ static void build_submit_values_decred(YAAMP_JOB_VALUES *submitvalues, YAAMP_JOB
 		// not used yet
 		char doublehash[128] = { 0 };
 
-		sprintf(submitvalues->coinbase, "%s%s%s%s", templ->coinb1, nonce1, nonce2, templ->coinb2);
+		snprintf(submitvalues->coinbase, sizeof(submitvalues->coinbase), "%s%s%s%s", templ->coinb1, nonce1, nonce2, templ->coinb2);
 		int coinbase_len = strlen(submitvalues->coinbase);
 
-		unsigned char coinbase_bin[1024];
-		memset(coinbase_bin, 0, 1024);
+		unsigned char coinbase_bin[sizeof(submitvalues->coinbase)/2 + 1];
+		memset(coinbase_bin, 0, sizeof(coinbase_bin));
 		binlify(coinbase_bin, submitvalues->coinbase);
 
 		YAAMP_HASH_FUNCTION merkle_hash = sha256_double_hash_hex;
@@ -229,11 +230,11 @@ static void client_do_submit(YAAMP_CLIENT *client, YAAMP_JOB *job, YAAMP_JOB_VAL
 
 	if(hash_int <= coin_target)
 	{
-		char count_hex[8] = { 0 };
+		char count_hex[16] = { 0 };
 		if (templ->txcount <= 252)
 			sprintf(count_hex, "%02x", templ->txcount & 0xFF);
 		else
-			sprintf(count_hex, "fd%02x%02x", templ->txcount & 0xFF, templ->txcount >> 8);
+			sprintf(count_hex, "fd%02x%02x", templ->txcount & 0xFF, (templ->txcount >> 8) & 0xFF);
 
 		memset(block_hex, 0, block_size);
 		sprintf(block_hex, "%s%s%s", submitvalues->header_be, count_hex, submitvalues->coinbase);
@@ -435,7 +436,9 @@ bool client_submit(YAAMP_CLIENT *client, json_value *json_params)
 
 	if(strcmp(ntime, templ->ntime))
 	{
-		if (!ishexa(ntime, 8)) {
+		// the ntime is part of the hashed header, a longer string would not be
+		// hashed entirely and would allow to bypass the duplicate share check
+		if (strlen(ntime) != 8 || !ishexa(ntime, 8)) {
 			client_submit_error(client, job, 23, "Invalid ntime", extranonce2, ntime, nonce);
 			return true;
 		}
@@ -456,6 +459,12 @@ bool client_submit(YAAMP_CLIENT *client, json_value *json_params)
 	if(strlen(extranonce2) != client->extranonce2size*2)
 	{
 		client_submit_error(client, job, 24, "Invalid extranonce2 size", extranonce2, ntime, nonce);
+		return true;
+	}
+
+	if(!ishexa(extranonce2, client->extranonce2size*2))
+	{
+		client_submit_error(client, job, 27, "Invalid nonce2", extranonce2, ntime, nonce);
 		return true;
 	}
 

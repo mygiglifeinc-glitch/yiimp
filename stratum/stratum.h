@@ -21,6 +21,7 @@
 #include <errmsg.h>
 #include <ifaddrs.h>
 #include <dirent.h>
+#include <sys/random.h>
 
 #include <iostream>
 #include <vector>
