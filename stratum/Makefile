@@ -16,7 +16,10 @@
 CC=gcc
 CXX=g++
 
-CFLAGS= -g -O2 -march=native
+# Portable by default so the binary keeps working if the VM moves to another
+# CPU model; build with "make MARCH=native" to tune for this machine.
+MARCH ?= x86-64-v2
+CFLAGS= -g -O2 -march=$(MARCH) -fno-strict-aliasing
 SQLFLAGS= `mysql_config --cflags`
 
 # Comment this line to disable address check on login,

@@ -5,7 +5,10 @@ CXX=g++
 #CFLAGS=-c -g -I /usr/include/mysql
 #LDFLAGS=-g
 
-CXXFLAGS = -O2 -I.. -march=native -MMD -MP
+# Portable by default so the binary keeps working if the VM moves to another
+# CPU model; build with "make MARCH=native" to tune for this machine.
+MARCH ?= x86-64-v2
+CXXFLAGS = -O2 -I.. -march=$(MARCH) -fno-strict-aliasing -MMD -MP
 CFLAGS= $(CXXFLAGS) -std=gnu17
 LDFLAGS=-O2 -lgmp
 
