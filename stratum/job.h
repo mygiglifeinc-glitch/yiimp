@@ -80,6 +80,9 @@ struct YAAMP_JOB_TEMPLATE
 	char proto_hash[80];            // kawpow: header hash sent to the miners
 	char proto_seed[80];            // kawpow: epoch seed hash
 	char proto_target[80];          // block target, 64 hex digits (big endian)
+	char proto_notify[640];         // equihash: the header fields of mining.notify (JSON strings)
+	int eq_n, eq_k;                 // equihash: parameters of the template
+	char eq_pers[16];               // equihash: first 8 bytes of the BLAKE2b personalization
 };
 
 #define YAAMP_JOB_MAXSUBIDS		200

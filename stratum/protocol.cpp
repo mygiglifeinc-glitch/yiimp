@@ -5,6 +5,8 @@
 const YAAMP_PROTOCOL *g_protocol = NULL;
 
 extern const YAAMP_PROTOCOL g_protocol_kawpow;
+extern const YAAMP_PROTOCOL g_protocol_equihash;
+extern const YAAMP_PROTOCOL g_protocol_resistance;
 
 // algo -> protocol family; algos not listed use the Bitcoin stratum (g_protocol NULL)
 static const struct {
@@ -17,6 +19,10 @@ static const struct {
 	{ "firopow",    &g_protocol_kawpow }, // FIRO
 	{ "sccpow",     &g_protocol_kawpow }, // SCC
 	{ "meraki",     &g_protocol_kawpow }, // TLS
+	{ "equihash",    &g_protocol_equihash },   // 200,9: ZEC, KMD, ARRR...
+	{ "equihash144", &g_protocol_equihash },   // 144,5: BTG, BTCZ, GLINK...
+	{ "equihash192", &g_protocol_equihash },   // 192,7: YEC, ZCL, ZER...
+	{ "yespowerRES", &g_protocol_resistance }, // RES
 	{ NULL, NULL }
 };
 
@@ -27,6 +33,12 @@ const YAAMP_PROTOCOL *protocol_for_algo(const char *algo)
 		if (!strcmp(g_algo_protocols[i].algo, algo))
 			return g_algo_protocols[i].protocol;
 	return NULL;
+}
+
+void protocol_config(dictionary *ini)
+{
+	const YAAMP_PROTOCOL *protocol = protocol_for_algo(g_stratum_algo);
+	if (protocol && protocol->config) protocol->config(ini);
 }
 
 void protocol_init()

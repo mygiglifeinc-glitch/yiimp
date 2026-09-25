@@ -541,17 +541,18 @@ YAAMP_JOB_TEMPLATE *coind_create_template(YAAMP_COIND *coind)
 		coind_aux_build_auxs(templ);
 
 	coinbase_create(coind, templ, json_result);
-	json_value_free(json);
 
 	// other stratum protocols (protocol.h): per job data (header hash...)
-	if(g_protocol && g_protocol->template_prepare && !g_protocol->template_prepare(coind, templ))
+	if(g_protocol && g_protocol->template_prepare && !g_protocol->template_prepare(coind, templ, json_result))
 	{
+		json_value_free(json);
 		templ->txsteps.clear();
 		templ->txdata.clear();
 		delete templ;
 		return NULL;
 	}
 
+	json_value_free(json);
 	return templ;
 }
 

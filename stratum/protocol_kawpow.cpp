@@ -112,7 +112,7 @@ static void kawpow_job_notify(YAAMP_JOB *job, YAAMP_CLIENT *client, char *buffer
 
 ////////////////////////////////////////////////////////////////////////////////////////
 
-static bool kawpow_template_prepare(YAAMP_COIND *coind, YAAMP_JOB_TEMPLATE *templ)
+static bool kawpow_template_prepare(YAAMP_COIND *coind, YAAMP_JOB_TEMPLATE *templ, json_value *gbt)
 {
 	static uint32_t counter = 0;
 	char extranonce[32];

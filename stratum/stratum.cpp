@@ -126,6 +126,12 @@ YAAMP_ALGO g_algos[] =
 	{"dedal", dedal_hash, 0x100, 0, 0},
 	{"deep", deep_hash, 1, 0, 0},
 	{"dmd-gr", groestl_hash, 0x100, 0, 0}, /* diamond (double groestl) */
+	/* Zcash family (protocol_equihash.cpp): the hash is the block id, sha256d(header+solution),
+	 * share difficulty 1 = 0x0007ffff.. = 2^13 solutions, stored as is (web: 2^23 hashrate
+	 * constant for Sol/s, see protocol_equihash.cpp) */
+	{"equihash", sha256_double_hash, 1, 0, 0}, /* 200,9: ZEC, KMD, ARRR... */
+	{"equihash144", sha256_double_hash, 1, 0, 0}, /* 144,5: BTG, BTCZ, GLINK... */
+	{"equihash192", sha256_double_hash, 1, 0, 0}, /* 192,7: YEC, ZCL, ZER... */
 	{"evrprogpow", evrprogpow_hash, 1, 0, 0}, /* Evrmore (EVR), kawpow stratum protocol */
 	{"exosis", exosis_hash, 0x100, 0, 0},
 	{"firopow", firopow_hash, 1, 0, 0}, /* Firo (FIRO), kawpow stratum protocol */
@@ -225,6 +231,7 @@ YAAMP_ALGO g_algos[] =
 	{"yespowerLTNCG", yespowerLTNCG_hash, 0x10000, 0, 0}, // Crionic (CRNC), LightningCash Gold
 	{"yespowerMGPC", yespowerMGPC_hash, 0x10000, 0, 0}, // Magpiecoin (MGPC)
 	{"yespowerR16", yespowerR16_hash, 0x10000, 0, 0}, // Yenten (YTN)
+	{"yespowerRES", yespowerRES_hash, 0x10000, 0, 0}, // Resistance (RES), 140 byte header
 	{"yespowerSUGAR", yespowerSUGAR_hash, 0x10000, 0, 0}, // Sugarchain (SUGAR)
 	{"yespowerTIDE", yespowerTIDE_hash, 0x10000, 0, 0}, // Tidecoin (TDC)
 	{"yespowerurx", yespowerurx_hash, 0x10000, 0, 0},
@@ -359,6 +366,9 @@ int main(int argc, char **argv)
 	g_debuglog_rpc = iniparser_getint(ini, "DEBUGLOG:rpc", false);
 	g_debuglog_list = iniparser_getint(ini, "DEBUGLOG:list", false);
 	g_debuglog_remote = iniparser_getint(ini, "DEBUGLOG:remote", false);
+
+	// own settings of the stratum protocol of the algo (equihash parameters...)
+	protocol_config(ini);
 
 	iniparser_freedict(ini);
 

@@ -12,7 +12,9 @@
 //                    mining.submit          -> submit()             (all the share handling)
 //                    other methods          -> method()             (optional)
 //   client_difficulty.cpp  client_send_difficulty -> send_difficulty()
-//   coind_template.cpp     after coinbase_create  -> template_prepare() (per job data)
+//   coind_template.cpp     after coinbase_create  -> template_prepare() (per job data, with the
+//                                                    getblocktemplate result)
+//   stratum.cpp      conf file read         -> config()             (optional, own settings)
 //   job_send.cpp     mining.notify          -> job_notify()         (per client if notify_per_client)
 //
 // The template (YAAMP_JOB_TEMPLATE) has a few proto_* fields the families can use for the
@@ -21,11 +23,11 @@
 //
 // Families:
 //   KAWPOW    protocol_kawpow.cpp   kawpow, evrprogpow, meowpow, firopow, sccpow, meraki
-//   EQUIHASH  (next)                Zcash style 140 byte headers + solutions. Expected hooks:
-//             template_prepare: 140 byte header parts (hashFinalSaplingRoot/hashBlockCommitments
-//             from the template), job_notify: ZIP-301 mining.notify, subscribe: [session, nonce1],
-//             send_difficulty: mining.set_target, submit: [worker, job, time, nonce2, solution],
-//             then protocol_submit_block() with the header + solution as header_hex.
+//   EQUIHASH  protocol_equihash.cpp equihash (200,9), equihash144 (144,5), equihash192 (192,7):
+//                                   Zcash style 140 byte headers + Equihash solutions, ZIP-301
+//                                   stratum (mining.set_target, 32 byte nonce = nonce1 || nonce2)
+//             (same file)           yespowerRES: Zcash style 140 byte header without solution,
+//                                   Bitcoin stratum of its miner (only template/notify hooks)
 
 #ifndef PROTOCOL_H
 #define PROTOCOL_H
@@ -48,8 +50,9 @@ struct YAAMP_PROTOCOL
 	// send the share difficulty (or target) to the miner
 	int (*send_difficulty)(YAAMP_CLIENT *client, double difficulty);
 
-	// called once per template, after coinbase_create(); false drops the template
-	bool (*template_prepare)(YAAMP_COIND *coind, YAAMP_JOB_TEMPLATE *templ);
+	// called once per template, after coinbase_create(), gbt is the getblocktemplate result;
+	// false drops the template
+	bool (*template_prepare)(YAAMP_COIND *coind, YAAMP_JOB_TEMPLATE *templ, json_value *gbt);
 
 	// mining.notify message; client is NULL when notify_per_client is false
 	void (*job_notify)(YAAMP_JOB *job, YAAMP_CLIENT *client, char *buffer, int size);
@@ -65,12 +68,16 @@ struct YAAMP_PROTOCOL
 
 	// initialization at startup (conf read), optional
 	void (*init)();
+
+	// own settings of the conf file, optional (called before init)
+	void (*config)(dictionary *ini);
 };
 
 // NULL for the Bitcoin family
 extern const YAAMP_PROTOCOL *g_protocol;
 
 const YAAMP_PROTOCOL *protocol_for_algo(const char *algo);
+void protocol_config(dictionary *ini);
 void protocol_init();
 
 ////////////////////////////////////////////////////////////////////////////////////////

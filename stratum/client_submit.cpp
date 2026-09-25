@@ -39,6 +39,12 @@ void build_submit_values(YAAMP_JOB_VALUES *submitvalues, YAAMP_JOB_TEMPLATE *tem
 		snprintf(submitvalues->header, sizeof(submitvalues->header), "%s%s%s%s%s%s%s", templ->version, templ->prevhash_be, submitvalues->merkleroot_be,
 			templ->claim_be, ntime, templ->nbits, nonce);
 		ser_string_be(submitvalues->header, submitvalues->header_be, 112/4);
+	} else if (!strcmp(g_stratum_algo, "yespowerRES")) {
+		// Resistance: Zcash style 140 byte header, hashFinalSaplingRoot after the merkle root
+		// and a 256 bit nonce whose first 32 bits are the stratum nonce (protocol_equihash.cpp)
+		snprintf(submitvalues->header, sizeof(submitvalues->header), "%s%s%s%s%s%s%s%056x", templ->version, templ->prevhash_be,
+			submitvalues->merkleroot_be, templ->extradata_be, ntime, templ->nbits, nonce, 0);
+		ser_string_be(submitvalues->header, submitvalues->header_be, 35);
 	} else if (strlen(templ->extradata_be) == 128) { // LUX SC
 		snprintf(submitvalues->header, sizeof(submitvalues->header), "%s%s%s%s%s%s%s", templ->version, templ->prevhash_be, submitvalues->merkleroot_be,
 			ntime, templ->nbits, nonce, templ->extradata_be);
