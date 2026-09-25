@@ -247,7 +247,6 @@ function file_get_contents_curl($url, $user = null)
     curl_setopt($ch, CURLOPT_WRITEFUNCTION, $callback);
 
     curl_exec($ch);
-    curl_close($ch);
 
     //	debuglog(" total read $totalread, ".strlen($data));
     return $data;

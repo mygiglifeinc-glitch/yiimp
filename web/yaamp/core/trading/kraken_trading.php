@@ -19,7 +19,7 @@ function doKrakenTrading($quick=false)
 			$db_balance = getdbosql('db_balances', "name='$exchange'");
 			if ($db_balance) {
 				$db_balance->balance = $balance;
-				//$db_balance->onsell = (double) $total['result']['tb'] - $balance;
+				//$db_balance->onsell = (float) $total['result']['tb'] - $balance;
 				$db_balance->save();
 			}
 			continue;

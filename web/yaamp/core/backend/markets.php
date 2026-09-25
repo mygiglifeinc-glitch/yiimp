@@ -144,13 +144,13 @@ function BackendWatchMarkets($marketname = NULL)
         {
             // hack to store the locked balance history as a "stake" market
             $remote = new WalletRPC($coin);
-            $stake = 0.; //(double) $remote->getbalance('*',0,'locked');
+            $stake = 0.; //(float) $remote->getbalance('*',0,'locked');
             $balances = $remote->getbalance('*', 0);
             if (isset($balances["balances"]))
             {
                 foreach ($balances["balances"] as $accb)
                 {
-                    $stake += (double)arraySafeVal($accb, 'lockedbytickets', 0);
+                    $stake += (float)arraySafeVal($accb, 'lockedbytickets', 0);
                 }
             }
             $info = $remote->getstakeinfo();
@@ -177,7 +177,7 @@ function BackendWatchMarkets($marketname = NULL)
             $mh->idmarket = $market->id;
             $mh->price = $market->price;
             $mh->price2 = $market->price2;
-            $mh->balance = (double)($market->balance) + (double)($market->ontrade);
+            $mh->balance = (float)($market->balance) + (float)($market->ontrade);
             $mh->save();
         }
     }
@@ -473,8 +473,8 @@ function updateGateioMarkets($force = false)
         foreach ($markets as $pair => $ticker)
         {
             if ($pair != $dbpair) continue;
-            $price2 = (doubleval($ticker['highestBid']) + doubleval($ticker['lowestAsk'])) / 2;
-            $market->price = AverageIncrement($market->price, doubleval($ticker['highestBid']));
+            $price2 = (floatval($ticker['highestBid']) + floatval($ticker['lowestAsk'])) / 2;
+            $market->price = AverageIncrement($market->price, floatval($ticker['highestBid']));
             $market->price2 = AverageIncrement($market->price2, $price2);
             $market->pricetime = time();
             $market->priority = - 1;
@@ -594,8 +594,8 @@ function updateKrakenMarkets($force = false)
         $ticker = arraySafeVal($ticker, $pair);
         if (!is_array($ticker) || !isset($ticker['b'])) continue;
 
-        $price1 = (double)$ticker['a'][0]; // a = ask
-        $price2 = (double)$ticker['b'][0]; // b = bid, c = last
+        $price1 = (float)$ticker['a'][0]; // a = ask
+        $price2 = (float)$ticker['b'][0]; // b = bid, c = last
         // Alt markets on kraken (LTC/DOGE/NMC) are "reversed" against BTC (1/x)
         if ($price2 > $price1)
         {
@@ -1382,8 +1382,8 @@ function updateHitBTCMarkets()
         {
             if ($p === $pair)
             {
-                $price2 = ((double)$ticker['bid'] + (double)$ticker['ask']) / 2;
-                $market->price = AverageIncrement($market->price, (double)$ticker['bid']);
+                $price2 = ((float)$ticker['bid'] + (float)$ticker['ask']) / 2;
+                $market->price = AverageIncrement($market->price, (float)$ticker['bid']);
                 $market->price2 = AverageIncrement($market->price2, $price2);
                 $market->pricetime = time(); // $ticker->timestamp
                 $market->priority = - 1;
@@ -1834,9 +1834,9 @@ function updateCoinExchangeMarkets()
         {
             if ($m->MarketID == $exchid)
             {
-                $price2 = ((double)$m->BidPrice + (double)$m->AskPrice) / 2;
+                $price2 = ((float)$m->BidPrice + (float)$m->AskPrice) / 2;
                 $market->price2 = AverageIncrement($market->price2, $price2);
-                $market->price = AverageIncrement($market->price, (double)$m->BidPrice);
+                $market->price = AverageIncrement($market->price, (float)$m->BidPrice);
                 $market->pricetime = time();
                 $market->marketid = $exchid;
                 $market->priority = - 1; // not ready for trading
@@ -1889,9 +1889,9 @@ function updateCoinsMarketsMarkets()
             continue;
         }
 
-        $price2 = ((double)$data['lowestAsk'] + (double)$data['highestBid']) / 2;
+        $price2 = ((float)$data['lowestAsk'] + (float)$data['highestBid']) / 2;
         $market->price2 = AverageIncrement($market->price2, $price2);
-        $market->price = AverageIncrement($market->price, (double)$data['highestBid']);
+        $market->price = AverageIncrement($market->price, (float)$data['highestBid']);
         $market->price = min($market->price, $market->price2); // reversed bid/ask ?
         $market->marketid = arraySafeVal($data, 'id');
         $market->priority = - 1; // not ready for trading
@@ -1958,9 +1958,9 @@ function updateStocksExchangeMarkets()
 
         $market->disabled = ($m->bid == 0);
 
-        $price2 = ((double)$m->ask + (double)$m->bid) / 2;
+        $price2 = ((float)$m->ask + (float)$m->bid) / 2;
         $market->price2 = AverageIncrement($market->price2, $price2);
-        $market->price = AverageIncrement($market->price, (double)$m->bid);
+        $market->price = AverageIncrement($market->price, (float)$m->bid);
         $market->priority = - 1; // not ready for trading
         $market->txfee = $m->sell_fee_percent;
 
@@ -2013,9 +2013,9 @@ function updateTradeSatoshiMarkets()
 
         $market->disabled = ($m->openBuyOrders == 0);
 
-        $price2 = ((double)$m->ask + (double)$m->bid) / 2;
+        $price2 = ((float)$m->ask + (float)$m->bid) / 2;
         $market->price2 = AverageIncrement($market->price2, $price2);
-        $market->price = AverageIncrement($market->price, (double)$m->bid);
+        $market->price = AverageIncrement($market->price, (float)$m->bid);
         $market->priority = - 1; // not ready for trading
         //debuglog("$exchange: $symbol price set to ".bitcoinvaluetoa($market->price));
         $market->pricetime = time();

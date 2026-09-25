@@ -57,7 +57,6 @@ function nova_api_user($method, $params=array())
 		debuglog("nova: $method failed ($status) ".strip_data($data).' '.curl_error($ch));
 	}
 
-	curl_close($ch);
 
 	return $res;
 }

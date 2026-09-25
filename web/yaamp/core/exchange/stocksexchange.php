@@ -58,7 +58,6 @@ function stocksexchange_api_user($method, $params=array())
 	if($res === false) {
 		$e = curl_error($ch);
 		debuglog("$exchange: $e");
-		curl_close($ch);
 		return false;
 	}
 
@@ -71,7 +70,6 @@ function stocksexchange_api_user($method, $params=array())
 			debuglog("$exchange: $method failed ($status) ".strip_data($res));
 	}
 
-	curl_close($ch);
 
 	return $result;
 }

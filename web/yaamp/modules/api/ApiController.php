@@ -66,7 +66,7 @@ class ApiController extends CommonController
                 ':algo' => $algo
             ));
 
-            $hashrate1 = (double) controller()->memcache->get_database_scalar("api_status_avghashrate-$algo", "select avg(hashrate) from hashrate where time>$t and algo=:algo", array(
+            $hashrate1 = (float) controller()->memcache->get_database_scalar("api_status_avghashrate-$algo", "select avg(hashrate) from hashrate where time>$t and algo=:algo", array(
                 ':algo' => $algo
             ));
 
@@ -80,14 +80,14 @@ class ApiController extends CommonController
                 "name" => $algo,
                 "port" => (int) $port,
                 "coins" => $coins,
-                "fees" => (double) $fees,
-                "hashrate" => (double) $hashrate,
+                "fees" => (float) $fees,
+                "hashrate" => (float) $hashrate,
                 "workers" => (int) $workers,
                 "estimate_current" => $price,
                 "estimate_last24h" => $avgprice,
                 "actual_last24h" => $btcmhday1,
                 "mbtc_mh_factor" => $algo_unit_factor,
-                "hashrate_last24h" => (double) $hashrate1
+                "hashrate_last24h" => (float) $hashrate1
             );
             if (YAAMP_RENTAL) {
                 $stat["rental_current"] = $rental;
@@ -154,10 +154,10 @@ class ApiController extends CommonController
                 // we need to compute the % of the coin compared to others with the same algo
                 if ($workers > 0) {
 
-                    $algohr        = (double) dboscalar("SELECT SUM(difficulty) AS algo_hr FROM shares WHERE time>$since AND algo=:algo", array(
+                    $algohr        = (float) dboscalar("SELECT SUM(difficulty) AS algo_hr FROM shares WHERE time>$since AND algo=:algo", array(
                         ':algo' => $coin->algo
                     ));
-                    $factor        = ($algohr > 0 && !empty($shares)) ? (double) $shares['coin_hr'] / $algohr : 1.;
+                    $factor        = ($algohr > 0 && !empty($shares)) ? (float) $shares['coin_hr'] / $algohr : 1.;
                     $algo_hashrate = controller()->memcache->get_database_scalar("api_status_hashrate-{$coin->algo}", "SELECT hashrate FROM hashrate WHERE algo=:algo ORDER BY time DESC LIMIT 1", array(
                         ':algo' => $coin->algo
                     ));
@@ -292,7 +292,7 @@ class ApiController extends CommonController
             echo "\"password\": " . json_encode($worker->password) . ", ";
             echo "\"ID\": " . json_encode($worker->worker) . ", ";
             echo "\"algo\": \"{$worker->algo}\", ";
-            echo "\"difficulty\": " . doubleval($worker->difficulty) . ", ";
+            echo "\"difficulty\": " . floatval($worker->difficulty) . ", ";
             echo "\"subscribe\": " . intval($worker->subscribe) . ", ";
             echo "\"accepted\": " . round($user_rate1, 3) . ", ";
             echo "\"rejected\": " . round($user_rate1_bad, 3);

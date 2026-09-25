@@ -77,7 +77,6 @@ function crex24_api_user($method, $url_params=array(), $json_body='')
 		debuglog("crex24: $method failed ($status) ".strip_data($data).' '.curl_error($ch));
 	}
 
-	curl_close($ch);
 
 	return $res;
 }

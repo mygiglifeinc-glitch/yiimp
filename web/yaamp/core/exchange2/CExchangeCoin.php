@@ -1,6 +1,6 @@
 <?php
 
-class CExchangeCoin
+abstract class CExchangeCoin
 {
 	public $marketname;
 
@@ -47,7 +47,7 @@ class CExchangeCoin
 
 /*
 
-class CExchangeCoinCryptsy extends CExchangeCoin
+abstract class CExchangeCoinCryptsy extends CExchangeCoin
 {
 	private $marketid;
 

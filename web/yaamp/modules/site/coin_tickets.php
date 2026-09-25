@@ -107,7 +107,7 @@ if (!empty($txs))
 {
     // to hide truncated days sums
     $tx = reset($txs);
-    if (count($txs) == $maxrows) $lastday = strftime('%F', arraySafeVal($tx, 'blocktime', $tx['time']));
+    if (count($txs) == $maxrows) $lastday = date('Y-m-d', arraySafeVal($tx, 'blocktime', $tx['time']));
 
     if (!empty($txs)) foreach ($txs as $tx)
     {
@@ -193,7 +193,7 @@ if (!empty($txs_array))
             $prev_tx = $tx;
         }
         // for truncated day sums
-        if ($lastday == '' && count($txs) == $maxrows) $lastday = strftime('%F', arraySafeVal($tx, 'blocktime', $tx['time']));
+        if ($lastday == '' && count($txs) == $maxrows) $lastday = date('Y-m-d', arraySafeVal($tx, 'blocktime', $tx['time']));
     }
     if ($info['version'] < 1010200) ksort($txs_array);
 }
@@ -243,7 +243,7 @@ foreach ($txs_array as $tx)
     }
     else
     {
-        $amount = (double)arraySafeVal($tx, 'amount');
+        $amount = (float)arraySafeVal($tx, 'amount');
         $stake = $amount - $stx['vout'][2]['value'];
         if (isset($stx['vout'][3]['value'])) // with pool fees
         $stake -= arraySafeVal($stx['vout'][3], 'value');
