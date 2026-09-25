@@ -123,6 +123,8 @@ static bool kawpow_template_prepare(YAAMP_COIND *coind, YAAMP_JOB_TEMPLATE *temp
 	CommonUnlock(&g_job_create_mutex);
 	sprintf(extranonce, "%08x%08x", n, (uint32_t) time(NULL));
 
+	if (!templ->coinb1[0] || !templ->coinb2[0]) return false; // coinbase_create() failed
+
 	if (strlen(templ->coinb1) + strlen(templ->coinb2) + 16 >= sizeof(templ->proto_coinbase)) {
 		stratumlog("ERROR %s coinbase too large\n", coind->symbol);
 		return false;
