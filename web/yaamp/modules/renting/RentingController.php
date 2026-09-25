@@ -13,12 +13,27 @@ class RentingController extends CommonController
         );
     }
 
+    // renter actions changing state through plain links (CSRF)
+    protected function beforeAction($action)
+    {
+        if (!parent::beforeAction($action)) return false;
+
+        $protected = array('orderdelete', 'resetspent', 'jobs_start', 'jobs_stop', 'jobs_startall', 'jobs_stopall', 'withdraw', 'ordersave');
+        if (in_array(strtolower($action->id), $protected) && $this->isCrossSiteRequest())
+        {
+            debuglog("renting: cross-site request refused {$action->id} from ".arraySafeVal($_SERVER, 'REMOTE_ADDR'));
+            $this->redirect('/renting');
+            return false;
+        }
+        return true;
+    }
+
     private function verifyparam()
     {
         $deposit = user()->getState('yaamp-deposit');
         $address = getparam('address');
 
-        if (!$this->admin && $deposit != $address) return false;
+        if (!$this->admin && (empty($deposit) || $deposit != $address)) return false;
 
         return true;
     }
@@ -37,13 +52,32 @@ class RentingController extends CommonController
             return;
         }
 
-        if (md5($password) != $renter->password && (!empty($renter->password) || !empty($password)))
+        // renters without password can login with the deposit address only.
+        // Old accounts store an unsalted md5, rehash it with bcrypt on login.
+        $stored = (string) $renter->password;
+        if ($stored === '')
+            $valid = ($password === '');
+        else if (strlen($stored) == 32 && ctype_xdigit($stored))
+            $valid = hash_equals(strtolower($stored), md5($password));
+        else
+            $valid = password_verify($password, $stored);
+
+        if ($valid && $stored !== '' && strlen($stored) == 32)
+        {
+            dborun("UPDATE renters SET password=:password WHERE id=:id", array(
+                ':password' => password_hash($password, PASSWORD_BCRYPT),
+                ':id' => $renter->id
+            ));
+        }
+
+        if (!$valid)
         {
             user()->setFlash('error', "Login failed.");
             $this->render('login');
             return;
         }
 
+        if (session_status() == PHP_SESSION_ACTIVE) session_regenerate_id(true);
         user()
             ->setState('yaamp-deposit', $renter->address);
         $this->redirect("/renting");
@@ -85,7 +119,7 @@ class RentingController extends CommonController
         {
             if ($_POST['deposit_password'] == $_POST['deposit_confirm'])
             {
-                $renter->password = md5($_POST['deposit_password']);
+                $renter->password = password_hash((string) $_POST['deposit_password'], PASSWORD_BCRYPT);
                 $changed = true;
             }
             else
@@ -142,6 +176,7 @@ class RentingController extends CommonController
 
     public function actionTx()
     {
+        if (!$this->verifyparam()) return;
         $this->renderPartial('tx');
     }
 
@@ -275,15 +310,16 @@ class RentingController extends CommonController
 
     public function actionOrderSave()
     {
-        $renter = getdbo('db_renters', XssFilter('' . getparam('order_renterid')));
+        $renter = getdbo('db_renters', getiparam('order_renterid'));
         if (!$renter || $renter->address != user()
             ->getState('yaamp-deposit')) return;
 
-        $job = getdbo('db_jobs', XssFilter('' . getparam('order_id')));
+        $job = getdbo('db_jobs', getiparam('order_id'));
+        if ($job && $job->renterid != $renter->id) return;
         if (!$job)
         {
             $job = new db_jobs;
-            $job->renterid = getparam('order_renterid');
+            $job->renterid = $renter->id;
         }
 
         $job->algo = getparam('order_algo');
@@ -337,12 +373,13 @@ class RentingController extends CommonController
         //		$job->difficulty = null;
         $job->save();
 
-        $this->redirect("/renting?address=" . getparam('order_address'));
+        $this->redirect("/renting?address=" . urlencode($renter->address));
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////
     public function actionOrderDialog()
     {
+        if (!$this->verifyparam()) return;
         $renter = getrenterparam('' . getparam('address'));
         if (!$renter) return;
 
@@ -356,6 +393,7 @@ class RentingController extends CommonController
         $id = 0;
 
         $job = getdbo('db_jobs', getiparam('id'));
+        if ($job && $job->renterid != $renter->id) return;
         if ($job)
         {
             $id = $job->id;
@@ -408,6 +446,7 @@ end;
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
     public function actionResetSpent()
     {
+        if (!$this->verifyparam()) return;
         $renter = getrenterparam('' . getparam('address'));
         if (!$renter) return;
 
@@ -435,8 +474,14 @@ end;
             return;
         }
 
-        $amount = getparam('withdraw_amount');
-        $address = getparam('withdraw_address');
+        if (!app()->request->isPostRequest)
+        {
+            $this->redirect("/renting");
+            return;
+        }
+
+        $amount = (float) arraySafeVal($_POST, 'withdraw_amount');
+        $address = (string) arraySafeVal($_POST, 'withdraw_address');
 
         $amount = floatval(bitcoinvaluetoa(min($amount, $renter->balance - $fees)));
         if ($amount < YAAMP_PAYMENTS_MINI) // 0.001

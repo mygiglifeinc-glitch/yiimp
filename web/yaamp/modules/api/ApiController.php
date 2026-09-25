@@ -4,6 +4,16 @@ class ApiController extends CommonController
 {
     public $defaultAction = 'status';
 
+    // all api answers are json, don't let a browser render them as html
+    protected function beforeAction($action)
+    {
+        if (!parent::beforeAction($action)) return false;
+        if (!headers_sent()) {
+            header('Content-Type: application/json; charset=utf-8');
+        }
+        return true;
+    }
+
     /////////////////////////////////////////////////
 
     public function actionStatus()
@@ -335,6 +345,8 @@ class ApiController extends CommonController
             return;
 
         $key    = getparam('key');
+        if (!is_string($key) || strlen($key) < 16)
+            return;
         $renter = getdbosql('db_renters', "apikey=:apikey", array(
             ':apikey' => $key
         ));
@@ -384,6 +396,8 @@ class ApiController extends CommonController
             return;
 
         $key    = getparam('key');
+        if (!is_string($key) || strlen($key) < 16)
+            return;
         $renter = getdbosql('db_renters', "apikey=:apikey", array(
             ':apikey' => $key
         ));
@@ -393,8 +407,8 @@ class ApiController extends CommonController
         $jobid = getparam('jobid');
         $price = getparam('price');
 
-        $job = getdbo('db_jobs', $jobid);
-        if ($job->renterid != $renter->id)
+        $job = getdbo('db_jobs', intval($jobid));
+        if (!$job || $job->renterid != $renter->id)
             return;
 
         $job->price = $price;
@@ -408,6 +422,8 @@ class ApiController extends CommonController
             return;
 
         $key    = getparam('key');
+        if (!is_string($key) || strlen($key) < 16)
+            return;
         $renter = getdbosql('db_renters', "apikey=:apikey", array(
             ':apikey' => $key
         ));
@@ -417,8 +433,8 @@ class ApiController extends CommonController
         $jobid    = getparam('jobid');
         $hashrate = getparam('hashrate');
 
-        $job = getdbo('db_jobs', $jobid);
-        if ($job->renterid != $renter->id)
+        $job = getdbo('db_jobs', intval($jobid));
+        if (!$job || $job->renterid != $renter->id)
             return;
 
         $job->speed = $hashrate;
@@ -432,6 +448,8 @@ class ApiController extends CommonController
             return;
 
         $key    = getparam('key');
+        if (!is_string($key) || strlen($key) < 16)
+            return;
         $renter = getdbosql('db_renters', "apikey=:apikey", array(
             ':apikey' => $key
         ));
@@ -440,8 +458,8 @@ class ApiController extends CommonController
 
         $jobid = getparam('jobid');
 
-        $job = getdbo('db_jobs', $jobid);
-        if ($job->renterid != $renter->id)
+        $job = getdbo('db_jobs', intval($jobid));
+        if (!$job || $job->renterid != $renter->id)
             return;
 
         $job->ready = true;
@@ -455,6 +473,8 @@ class ApiController extends CommonController
             return;
 
         $key    = getparam('key');
+        if (!is_string($key) || strlen($key) < 16)
+            return;
         $renter = getdbosql('db_renters', "apikey=:apikey", array(
             ':apikey' => $key
         ));
@@ -463,8 +483,8 @@ class ApiController extends CommonController
 
         $jobid = getparam('jobid');
 
-        $job = getdbo('db_jobs', $jobid);
-        if ($job->renterid != $renter->id)
+        $job = getdbo('db_jobs', intval($jobid));
+        if (!$job || $job->renterid != $renter->id)
             return;
 
         $job->ready = false;

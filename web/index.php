@@ -36,6 +36,9 @@ catch(CException $e)
 //	Javascript("window.history.go(-1)");
 //	mydump($e, 3);
 
+	if ($e instanceof CHttpException && !headers_sent())
+		http_response_code($e->statusCode);
+
 	debuglog("front end error ".$_SERVER['REMOTE_ADDR']);
 	debuglog($e->getMessage());
 

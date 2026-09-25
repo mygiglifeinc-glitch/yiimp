@@ -23,6 +23,10 @@ class SiteController extends CommonController
         else
             debuglog("admin connect failure from $client_ip");
 
+        // new session id on privilege change (session fixation)
+        if ($valid && session_status() == PHP_SESSION_ACTIVE)
+            session_regenerate_id(true);
+
         user()->setState('yaamp_admin', $valid);
 
         $this->redirect("/site/common");
@@ -1214,8 +1218,9 @@ class SiteController extends CommonController
         else
             user()->setState('yaamp-algo', 'all');
 
+        // only allow local paths, to not be usable as an open redirect
         $route = getparam('r');
-        if (!empty($route))
+        if (is_string($route) && preg_match('#^/(?![/\\\\])#', $route) && !preg_match('#[\\x00-\\x1f]#', $route))
             $this->redirect($route);
         else
             $this->goback();
@@ -1224,7 +1229,7 @@ class SiteController extends CommonController
     public function actionGomining()
     {
         $algo = getalgoparam();
-        if ($algo == 'all') {
+        if ($algo == 'all' || empty($algo)) {
             return;
         }
         user()->setState('yaamp-algo', $algo);
@@ -1267,6 +1272,8 @@ class SiteController extends CommonController
 
     public function actionOptimize()
     {
+        if (!$this->admin)
+            return;
         BackendOptimizeTables();
         $this->goback();
     }
