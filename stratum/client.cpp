@@ -57,13 +57,8 @@ bool client_subscribe(YAAMP_CLIENT *client, json_value *json_params)
 	strcpy(client->extranonce1, client->extranonce1_default);
 	client->extranonce2size = client->extranonce2size_default;
 
-	// decred uses an extradata field in block header, 2 first uint32 are set by the miner
-	if (g_current_algo->name && !strcmp(g_current_algo->name,"decred")) {
-		memset(client->extranonce1, '0', sizeof(client->extranonce1));
-		memcpy(&client->extranonce1[16], client->extranonce1_default, YAAMP_EXTRANONCE2_SIZE*2);
-		client->extranonce1[24] = '\0';
-		client->extranonce2size = client->extranonce2size_default = 12;
-	}
+	// decred: extranonce1 (4 bytes) and extranonce2 (4 bytes) are the first
+	// 8 bytes of the header extradata field, the defaults fit (gominer)
 
 	get_random_key(client->notify_id);
 
