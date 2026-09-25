@@ -22,7 +22,17 @@ static void job_mining_notify_buffer(YAAMP_JOB *job, YAAMP_CLIENT *client, char 
 		return;
 	}
 
-	if (!strcmp(g_stratum_algo, "lbry")) {
+	if (job->coind && !strcmp(job->coind->rpcencoding, "DCR")) {
+		// Decred (dcrpool / gominer): prevhash and the partial header (after the
+		// prevhash, "coinb1") as serialized, empty coinb2 and merkle branches,
+		// version, bits and time as serialized (little endian)
+		char nbits[16];
+		hexlify(nbits, (const unsigned char *) &templ->header[116], 4);
+		sprintf(buffer, "{\"id\":null,\"method\":\"mining.notify\",\"params\":["
+			"\"%x\",\"%s\",\"%s\",\"\",[],\"%s\",\"%s\",\"%s\",true]}\n",
+			job->id, templ->prevhash_be, templ->coinb1, templ->version, nbits, templ->ntime);
+		return;
+	} else if (!strcmp(g_stratum_algo, "lbry")) {
 		sprintf(buffer, "{\"id\":null,\"method\":\"mining.notify\",\"params\":["
 			"\"%x\",\"%s\",\"%s\",\"%s\",\"%s\",[%s],\"%s\",\"%s\",\"%s\",true]}\n",
 			job->id, templ->prevhash_be, templ->claim_be, templ->coinb1, templ->coinb2,

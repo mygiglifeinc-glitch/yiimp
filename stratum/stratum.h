@@ -169,6 +169,7 @@ void sha3d_hash_hex(const char *input, char *output, unsigned int len);
 #include "algos/bcd.h"
 #include "algos/bitcore.h"
 #include "algos/blake.h"
+#include "algos/blake3hash.h"
 #include "algos/blake2b.h"
 #include "algos/blake2s.h"
 #include "algos/blakecoin.h"

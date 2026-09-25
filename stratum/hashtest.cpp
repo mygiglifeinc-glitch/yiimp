@@ -10,6 +10,7 @@
 // (compiler, flags, library changes...) can be compared.
 
 #include "stratum.h"
+#include "sha3/sph_blake.h"
 
 // same wrappers as in stratum.cpp
 static void scrypt_hash(const char* input, char* output, uint32_t len)
@@ -48,6 +49,7 @@ static const struct test_algo algos[] = {
 	{ "blake", blake_hash },
 	{ "blake2b", blake2b_hash },
 	{ "blake2s", blake2s_hash },
+	{ "blake3", blake3_hash },
 	{ "blakecoin", blakecoin_hash },
 	{ "bmw", bmw_hash },
 	{ "bmw512", bmw512_hash },
@@ -297,6 +299,50 @@ static const struct kat_vector kat_vectors[] = {
 	{ NULL, NULL, NULL, NULL, NULL }
 };
 
+// Decred (DCP-0011): real mainnet 180-byte headers (dcrdata /api/block/<h>/header/raw).
+// The block id is BLAKE-256 (14 rounds) of the header (exact, = block hash given by
+// dcrdata); the proof of work hash is BLAKE3 of the header, exact values computed with
+// dcrd's wire.BlockHeader.PowHashV2() and checked below the header nBits.
+struct dcr_vector {
+	const char *source;
+	const char *header;
+	const char *blockhash;
+	const char *powhash;
+};
+
+static const struct dcr_vector dcr_vectors[] = {
+	{ "DCR block 794368 (first BLAKE3 block)",
+	  "0a000000f04e765c994d860e77afcd25ea4704965ed00974c6d893c20000000000000000609e379d61a43226fc875bf232c5406085109932"
+	  "a13e3d226e1f6d0362772abe5ff6678090180b3534830a6daae8b02ccec81c628fca089907720ca15363838f01009f1e7b7d200705000b00"
+	  "7d9f0000a6a5001b097f8c8205000000001f0c00cf7e00008af1ed64bd193281b6233e65040b01a000000000000000000000000000000000"
+	  "00000000000000000a000000",
+	  "071683030010299ab13f139df59dc98d637957b766e47f8da6dd5ac762f1e8c7",
+	  "0000000000008346f98ac94f4c031d1b8544dd14566fcef233d40fbe3be7d1cc" },
+	{ "DCR block 800000",
+	  "0a000000845634a7f813fd81a63f035daa686ece8ab1d877f75ea072c4c2f5d0d6c1668b5b442bf92e1f8be2d1925b904327e5a4359a0cff"
+	  "eaef994fe160bb2d8e11d2aa2287c96f5752bb19ac6c34f1bdb74cd33da0fcc6ce86af325242c7785bdc11db01007cd61ced0bfd05000000"
+	  "919e000069c32f1af628072c0600000000350c00536a00006c7f066541e0e6a78e2b78b4d94fff304b000000000000000000000000000000"
+	  "00000000000000000a000000",
+	  "b06ef2f4796e90785ff950b202caae05adfc92f56f1ef6dc5829d09cf2aea433",
+	  "0000000000002e77e2b03c9279ce04d342c946b1fabb18694d3f736a90d7f1f7" },
+	{ "DCR block 1000000",
+	  "0a0000000914d28a027a4e7dba7ff665319a5209e9422efbb73a6b5fc33f08c702e330d6f57af4012e77a7f06883dec8eccb94d4fdd26e91"
+	  "00f0d414752e59a6bc1c98d4c2eac3ee2557a12c614b64bdba7c75e7cc001061fa57407d7205ef85eb57a00a010051a37db7f93f05000000"
+	  "189f0000e40d131a0881f3a20500000040420f00338f000029289968e20e2443cf02fd1f3f0100ae00000000000000000000000000000000"
+	  "00000000000000000a000000",
+	  "b2b7e4e1b6ea5bf038d3cff04548c55d04ddba82ee940552ddbb6aa91be6ed22",
+	  "0000000000000e534fd06e7a272ff5991ae09a43eadff3817caf136dfd5bf7e9" },
+	{ NULL, NULL, NULL, NULL }
+};
+
+// official BLAKE3 test vectors (test_vectors.json: input byte i = i % 251, first 32 bytes of the hash)
+static const struct { uint32_t len; const char *hash; } blake3_vectors[] = {
+	{ 0,    "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262" },
+	{ 1024, "42214739f095a406f3fc83deb889744ac00df831c10daa55189b5d121c855af7" },
+	{ 1025, "d00278ae47eb27b34faecf67b4fe263f82d5412916c1ffd97c8cb7fb814b8444" },
+	{ 0, NULL }
+};
+
 static void to_hex_be(const unsigned char *bin, int len, char *hex)
 {
 	for (int i = 0; i < len; i++)
@@ -492,6 +538,52 @@ int main(int argc, char **argv)
 		}
 	}
 
+	if (argc < 2 || !strcmp(argv[1], "blake3")) {
+		for (int k = 0; blake3_vectors[k].hash; k++) {
+			unsigned char buf[1025];
+			for (uint32_t i = 0; i < blake3_vectors[k].len; i++) buf[i] = (unsigned char) (i % 251);
+			memset(output, 0, sizeof(output));
+			blake3_hash((const char *) buf, (char *) output, blake3_vectors[k].len);
+			to_hex(output, 32, hex);
+			if (strcmp(hex, blake3_vectors[k].hash)) {
+				printf("FAIL blake3 KAT (official vector, len %u): %s\n", blake3_vectors[k].len, hex);
+				errors++;
+			} else {
+				printf("OK   blake3 KAT (official vector, len %u)\n", blake3_vectors[k].len);
+			}
+		}
+	}
+
+	for (int k = 0; dcr_vectors[k].source; k++) {
+		unsigned char hdr[180];
+		if (argc > 1 && strcmp(argv[1], "decred")) continue;
+		from_hex(dcr_vectors[k].header, hdr, 180);
+		uint32_t nbits = hdr[116] | (hdr[117] << 8) | (hdr[118] << 16) | ((uint32_t) hdr[119] << 24);
+		// target as a 64-hex string (big endian) to compare with the displayed hash
+		char target[65];
+		memset(target, '0', 64); target[64] = 0;
+		int nbytes = nbits >> 24;
+		char mant[7];
+		sprintf(mant, "%06x", nbits & 0xffffff);
+		memcpy(target + 64 - 2*nbytes, mant, 6);
+
+		memset(output, 0, sizeof(output));
+		decred_block_hash((const char *) hdr, (char *) output, 180);
+		to_hex_be(output, 32, hex);
+		bool ok = !strcmp(hex, dcr_vectors[k].blockhash);
+		if (!ok) printf("FAIL decred block id (%s): %s\n", dcr_vectors[k].source, hex);
+
+		memset(output, 0, sizeof(output));
+		decred_hash((const char *) hdr, (char *) output, 180);
+		to_hex_be(output, 32, hex);
+		if (strcmp(hex, dcr_vectors[k].powhash) || strcmp(hex, target) >= 0) {
+			printf("FAIL decred KAT (%s): %s, target %s\n", dcr_vectors[k].source, hex, target);
+			ok = false;
+		}
+		if (ok) printf("OK   decred KAT (%s)\n", dcr_vectors[k].source);
+		else errors++;
+	}
+
 	// extend the header with a pattern for the algos using longer headers
 	for (int i = 80; i < (int) sizeof(input); i++)
 		input[i] = (unsigned char) (i * 7);
@@ -503,6 +595,9 @@ int main(int argc, char **argv)
 		if (!strcmp(name, "decred")) len = 180;
 		else if (!strcmp(name, "lbry")) len = 112;
 
+		// sph_blake256 keeps its round count in a global (blakecoin sets 8): start
+		// every algo from the default 14 rounds, like in its own stratum process
+		sph_blake256_set_rounds(14);
 		memset(output, 0, sizeof(output));
 		algos[a].hash((const char *) input, (char *) output, len);
 		to_hex(output, 32, hex);

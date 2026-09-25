@@ -1,6 +1,11 @@
 
 #define MAX_AUXS	32
 
+// Decred block header (see coind_template.cpp)
+#define DECRED_HEADER_SIZE		180
+#define DECRED_GETWORK_SIZE		192	// header + BLAKE3 padding (zeros)
+#define DECRED_EXTRANONCE_OFFSET	144	// extradata: extranonce1, extranonce2
+
 class YAAMP_REMOTE;
 class YAAMP_COIND;
 class YAAMP_COIND_AUX;
