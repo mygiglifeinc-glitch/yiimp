@@ -118,8 +118,10 @@ YAAMP_ALGO g_algos[] =
 	{"deep", deep_hash, 1, 0, 0},
 	{"dmd-gr", groestl_hash, 0x100, 0, 0}, /* diamond (double groestl) */
 	{"exosis", exosis_hash, 0x100, 0, 0},
+	{"flex", flex_hash, 1, 0, sha3d_hash_hex}, /* Kylacoin, Lyncoin: sha3d txids */
 	{"fresh", fresh_hash, 0x100, 0, 0},
 	{"geek", geek_hash, 1, 0, 0},
+	{"ghostrider", ghostrider_hash, 0x10000, 0, 0}, /* Raptoreum */
 	{"groestl", groestl_hash, 0x100, 0, sha256_hash_hex }, /* groestlcoin */
 	{"hex", hex_hash, 0x100, 0, sha256_hash_hex },
 	{"hmq1725", hmq17_hash, 0x10000, 0, 0},
@@ -139,7 +141,9 @@ YAAMP_ALGO g_algos[] =
 	{"lyra2z", lyra2z_hash, 0x100, 0, 0},
 	{"lyra2zz", lyra2zz_hash, 0x100, 0, 0},
 	{"m7m", m7m_hash, 0x10000, 0, 0},
+	{"mike", mike_hash, 0x10000, 0, 0}, /* VKAX */
 	{"minotaur", minotaur_hash, 1, 0, 0},
+	{"minotaurx", minotaurx_hash, 1, 0, 0}, /* LCC, AVN, MAZA, PLSR... (pow type 1 in nVersion bits 16-23) */
 	{"myr-gr", groestlmyriad_hash, 1, 0, 0}, /* groestl + sha 64 */
 	{"neoscrypt", neoscrypt_hash, 0x10000, 0, 0},
 	{"nist5", nist5_hash, 1, 0, 0},

@@ -152,6 +152,7 @@ void scrypt_N_R_1_256(const char* input, char* output, uint32_t N, uint32_t R, u
 
 void sha256_hash_hex(const char *input, char *output, unsigned int len);
 void sha256_double_hash_hex(const char *input, char *output, unsigned int len);
+void sha3d_hash_hex(const char *input, char *output, unsigned int len);
 
 
 #include "algos/a5a.h"
@@ -239,3 +240,5 @@ void sha256_double_hash_hex(const char *input, char *output, unsigned int len);
 #include "algos/xevan.h"
 #include "algos/yespower/yespower.h"
 #include "algos/zr5.h"
+#include "algos/ghostrider.h"
+#include "algos/flex.h"
