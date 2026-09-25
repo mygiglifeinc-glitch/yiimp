@@ -160,6 +160,8 @@ YAAMP_ALGO g_algos[] =
 	{"sha256", sha256_double_hash, 1, 0, 0},
 	{"sha256q", sha256q_hash, 1, 0, 0}, // sha256 4x
 	{"sha256t", sha256t_hash, 1, 0, 0}, // sha256 3x
+	{"sha3-256t", sha3_256t_hash, 1, 0, 0}, // BitcoinIII (BC3), FIPS SHA3-256 3x
+	{"sha512256d", sha512256d_hash, 1, 0, 0}, // Radiant (RXD), SHA-512/256 2x
 	{"sib", sib_hash, 1, 0, 0},
 	{"skein", skein_hash, 1, 0, 0},
 	{"skein2", skein2_hash, 1, 0, 0},

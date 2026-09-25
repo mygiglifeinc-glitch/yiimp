@@ -98,6 +98,8 @@ static const struct test_algo algos[] = {
 	{ "sha256", sha256_double_hash },
 	{ "sha256q", sha256q_hash },
 	{ "sha256t", sha256t_hash },
+	{ "sha3-256t", sha3_256t_hash },
+	{ "sha512256d", sha512256d_hash },
 	{ "sib", sib_hash },
 	{ "skein", skein_hash },
 	{ "skein2", skein2_hash },
@@ -167,6 +169,12 @@ static const struct kat kats[] = {
 	{ "power2b", // MicroBitcoin genesis, exact (= hashGenesisBlockWork)
 	  "010000000000000000000000000000000000000000000000000000000000000000000000df88deb6f10587e13df6826ca867cabe31cb44aaddefb64a4ae11730adcc263425d99d5dffff3f1fc5020000",
 	  "001cb6047ddf13074c4bce354ed3cf0cdd96a4287aa562b032eb81d03e183da8" },
+	{ "sha3-256t", // BitcoinIII block 60000, exact (= block hash)
+	  "0010002064a6ffc22ad8c07e6573beb8ffa90aefeab3a6f5d41dd91de30f0000000000000a97cb61fd5e5f3f056860c8134f6d749e45130f951b341811e14515e965a57a32679d6a804d6a1a837c0169",
+	  "0000000000002b7101d9a41dc0c72284ce35860c2b8cd68a0f17f4a0ceed9914" },
+	{ "sha512256d", // Radiant genesis, exact (= hashGenesisBlock)
+	  "010000000000000000000000000000000000000000000000000000000000000000000000372cbaf89794aeed5e711b02e78ec4502ad8b315a987c2e2758a85e36a3f7c02aadeaf62ffff001d7980b72a",
+	  "0000000065d8ed5d8be28d6876b3ffb660ac2a6c0ca59e437e1f7a6f4e003fb4" },
 	{ "yescrypt", // GlobalBoost-Y block 600000, meets its target
 	  "00000020d471ca3a815bc4c93fd22838a6b8bbaf30730b02aa35885be676f22bc5b3f93a800033859ee149e0daf13454ac6bcb76a062b0555af85584fb10e71207119b3a1152a76aba9c041d82c40020",
 	  "000000028924f1138ff2a805c125ff1ab2dcb6894e7dff6b5f20432ff00757bf" },

@@ -207,6 +207,8 @@ void sha256_double_hash_hex(const char *input, char *output, unsigned int len);
 #include "algos/rainforest.h"
 #include "algos/sha256q.h"
 #include "algos/sha256t.h"
+#include "algos/sha512256d.h"
+#include "algos/sha3_256t.h"
 #include "algos/sib.h"
 #include "algos/skein.h"
 #include "algos/skein2.h"
