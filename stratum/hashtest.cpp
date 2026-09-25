@@ -59,7 +59,9 @@ static const struct test_algo algos[] = {
 	{ "dmd-gr", groestl_hash },
 	{ "exosis", exosis_hash },
 	{ "fresh", fresh_hash },
+	{ "flex", flex_hash },
 	{ "geek", geek_hash },
+	{ "ghostrider", ghostrider_hash },
 	{ "groestl", groestl_hash },
 	{ "hex", hex_hash },
 	{ "hmq1725", hmq17_hash },
@@ -79,7 +81,9 @@ static const struct test_algo algos[] = {
 	{ "lyra2z", lyra2z_hash },
 	{ "lyra2zz", lyra2zz_hash },
 	{ "m7m", m7m_hash },
+	{ "mike", mike_hash },
 	{ "minotaur", minotaur_hash },
+	{ "minotaurx", minotaurx_hash },
 	{ "myr-gr", groestlmyriad_hash },
 	{ "neoscrypt", neoscrypt_hash },
 	{ "nist5", nist5_hash },
@@ -248,6 +252,45 @@ static const char genesis_hex[] =
 static const char genesis_hash[] = // displayed (big endian) hash
 	"000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f";
 
+// Known answer tests: 80-byte block headers (serialized, hex) and the expected PoW hash
+// (displayed, big endian). "chain" vectors are real blocks whose hash was checked against
+// the block target (the chain itself only stores the block id).
+struct kat_vector {
+	const char *name;
+	YAAMP_HASH_FUNCTION hash;
+	const char *header;
+	const char *expected;
+	const char *source;
+};
+
+static const struct kat_vector kat_vectors[] = {
+	// Raptoreum mainnet block 1437000 (a4f85d05803cba9bcc17cbc68378b6c41b57b2cb4686dc5aef3ffcb056469668),
+	// bits 1d0b1bcb; also checked on blocks 1, 5000, 250000, 800000, 1200000, 1436990
+	{ "ghostrider", ghostrider_hash,
+	  "00000020ec99747e276395fac51fa2fa06f7db4ba714c5d7de09f1e402b2201af97a81ea3eeee81e058f7ae783aa059eb57d8a633befcfa5202bf1cec2a59da30b8f4d9b2bcfb56acb1b0b1d62000700",
+	  "000000049c87fbffb8a48536d82ded5c4d43e28ac85048eb08f137e0093c5a89", "RTM block 1437000" },
+	// VKAX mainnet genesis (ef99ea0231cf5ccee64a5350f79d8b17348f9a72cc1899113c4082c9f6aa1987),
+	// bits 20001fff, nonce 140 is the first nonce meeting the target
+	{ "mike", mike_hash,
+	  "0400000000000000000000000000000000000000000000000000000000000000000000003ce42dd41a0ead4764d88555bec2112f297d1319340c09b64a150713be0692c510f3a862ff1f00208c000000",
+	  "001e00af492cad6158de291018e6a2674aa393d983cc9a28898e98c48d3e05c1", "VKAX genesis" },
+	// Litecoin Cash mainnet block 4522303 (33045efb468ce515dc01b088df8dff36824f485d38cee0cbeeddd3fb0e708243),
+	// MinotaurX block (nVersion 0x00010000), bits 1d3370ff
+	{ "minotaurx", minotaurx_hash,
+	  "00000100b95bc9244cac8ca986ecedc01bb64fe3988067ea44446503a4d3be02b2879e0d21be074001e6db4e298487aeab8bb1438d754a706d29f28fd3c64ed344f1dcba42fab56aff70331d372c55d1",
+	  "00000009a63a77b3884a8e28c103efb5d263f7aa8b2de5364fbdd09fc84dfdae", "LCC block 4522303" },
+	// no mainnet KCN/LCN header could be fetched: Kylacoin regtest block 115 accepted by
+	// kylacoind (Kylacoin Core eeeeb47b), hash identical to Kylacoin Core's flex_hash()
+	{ "flex", flex_hash,
+	  "00800020b03d9892780e946e6eb5bd3ab9fc1d8177794ddbe8eb9328eb614863769d99d117dbc5be30a15f9df8730e3aa62e07e8f38edf19dc2757c31efac40bd23a3aba9d77b66affff7f20504f0000",
+	  "00016053e4873256c467657a2aa4814d98050479b67c9568a4b374bc38035592", "KCN regtest block 115 / Kylacoin Core flex_hash" },
+	// flex of the LCC header above, computed with Kylacoin Core's flex_hash()
+	{ "flex", flex_hash,
+	  "00000100b95bc9244cac8ca986ecedc01bb64fe3988067ea44446503a4d3be02b2879e0d21be074001e6db4e298487aeab8bb1438d754a706d29f28fd3c64ed344f1dcba42fab56aff70331d372c55d1",
+	  "3f5f1b703df28379f41fb1e3121a6a3f72faf7869d16bb722e8ba94bed536571", "Kylacoin Core flex_hash" },
+	{ NULL, NULL, NULL, NULL, NULL }
+};
+
 static void to_hex_be(const unsigned char *bin, int len, char *hex)
 {
 	for (int i = 0; i < len; i++)
@@ -341,6 +384,24 @@ int main(int argc, char **argv)
 	}
 
 	errors += run_kats(argc > 1 ? argv[1] : NULL);
+	for (int k = 0; kat_vectors[k].name; k++) {
+		unsigned char hdr[80];
+		if (argc > 1 && strcmp(argv[1], kat_vectors[k].name)) continue;
+		for (int i = 0; i < 80; i++) {
+			unsigned int v;
+			sscanf(kat_vectors[k].header + 2*i, "%02x", &v);
+			hdr[i] = (unsigned char) v;
+		}
+		memset(output, 0, sizeof(output));
+		kat_vectors[k].hash((const char *) hdr, (char *) output, 80);
+		to_hex_be(output, 32, hex);
+		if (strcmp(hex, kat_vectors[k].expected)) {
+			printf("FAIL %s KAT (%s): %s\n", kat_vectors[k].name, kat_vectors[k].source, hex);
+			errors++;
+		} else {
+			printf("OK   %s KAT (%s)\n", kat_vectors[k].name, kat_vectors[k].source);
+		}
+	}
 
 	// extend the header with a pattern for the algos using longer headers
 	for (int i = 80; i < (int) sizeof(input); i++)

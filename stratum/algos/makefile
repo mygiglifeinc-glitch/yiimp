@@ -23,6 +23,8 @@ SOURCES=lyra2re.c lyra2v2.c lyra2v3.c Lyra2.c lyra2z.c Lyra2-z.c lyra2zz.c Lyra2
 	phi.c phi2.c polytimos.c rainforest.c skunk.c sib.c veltor.c gost.c aergo.c x20r.c x21s.c lbk3.c pipehash.c gltalgos.c \
 	yespower/yespower-platform.c yespower/yespower-combined.c sha256-P.c dedal.c phi1612.c bcd.c \
 	sha512256d.c sha3_256t.c verthash.c \
+	ghostrider.c flex.c cryptonote/cn_slow_hash.c cryptonote/aesb.c cryptonote/c_keccak.c cryptonote/c_blake256.c \
+	cryptonote/c_groestl.c cryptonote/c_jh.c cryptonote/c_skein.c \
 
 OBJECTS=$(patsubst %.cpp,%.o,$(SOURCES:.c=.o))
 OUTPUT=libalgos.a
@@ -49,3 +51,4 @@ clean:
 	rm -f ar2/*.o
 	rm -f blake2/*.o
 	rm -f SWIFFTX/*.o
+	rm -f cryptonote/*.o cryptonote/*.d
