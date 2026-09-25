@@ -149,6 +149,7 @@ class RentingController extends CommonController
     public function actionJobs_stop()
     {
         $job = getdbo('db_jobs', getiparam('id'));
+        if (!$job) $this->goback();
 
         $renter = getdbo('db_renters', $job->renterid);
         if (!$renter || $renter->address != user()
@@ -166,6 +167,7 @@ class RentingController extends CommonController
     public function actionJobs_start()
     {
         $job = getdbo('db_jobs', getiparam('id'));
+        if (!$job) $this->goback();
         //		if($job->algo == 'sha256') $this->goback();
         $renter = getdbo('db_renters', $job->renterid);
         if (!$renter || $renter->balance <= 0.00001000 || $renter->address != user()

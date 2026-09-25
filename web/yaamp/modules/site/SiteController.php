@@ -260,6 +260,7 @@ class SiteController extends CommonController
         if (!$this->admin)
             return;
 
+        $coin = null;
         $bookmark = getdbo('db_bookmarks', getiparam('id'));
         if ($bookmark) {
             $coin   = getdbo('db_coins', $bookmark->idcoin);
@@ -300,6 +301,7 @@ class SiteController extends CommonController
             }
         }
 
+        if (!$coin) $this->goback();
         $this->redirect(array(
             'site/coin',
             'id' => $coin->id
@@ -389,11 +391,11 @@ class SiteController extends CommonController
         $valid                = true;
         $rule                 = new db_notifications;
         $rule->idcoin         = $coin->id;
-        $rule->notifytype     = $_POST['notifytype'];
-        $rule->conditiontype  = $_POST['conditiontype'];
-        $rule->conditionvalue = $_POST['conditionvalue'];
-        $rule->notifycmd      = $_POST['notifycmd'];
-        $rule->description    = $_POST['description'];
+        $rule->notifytype     = arraySafeVal($_POST, 'notifytype', '');
+        $rule->conditiontype  = arraySafeVal($_POST, 'conditiontype', '');
+        $rule->conditionvalue = arraySafeVal($_POST, 'conditionvalue', '');
+        $rule->notifycmd      = arraySafeVal($_POST, 'notifycmd', '');
+        $rule->description    = arraySafeVal($_POST, 'description', '');
         $rule->enabled        = 1;
         $rule->lastchecked    = 0; // time
         $rule->lasttriggered  = 0;

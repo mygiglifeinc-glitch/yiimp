@@ -49,7 +49,7 @@ $res = array();
 
 function cmp($a, $b)
 {
-    return $a[2] < $b[2];
+    return $b[2] <=> $a[2];
 }
 
 if (!empty($a)) foreach ($a as $url => $n)

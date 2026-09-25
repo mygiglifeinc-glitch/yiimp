@@ -1,5 +1,9 @@
 <?php
 
+// Yii turns every reported PHP notice into an exception (a 500 error page).
+// Don't let deprecation notices from newer PHP releases break the pool.
+error_reporting(E_ALL & ~E_DEPRECATED);
+
 //define('YII_DEBUG', true);
 
 require_once('serverconfig.php');

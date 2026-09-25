@@ -2,6 +2,10 @@
 
 if(php_sapi_name() != "cli") return;
 
+// Yii turns every reported PHP notice into an exception (a 500 error page).
+// Don't let deprecation notices from newer PHP releases break the pool.
+error_reporting(E_ALL & ~E_DEPRECATED);
+
 require_once('serverconfig.php');
 require_once('yaamp/defaultconfig.php');
 require_once('yaamp/core/core.php');

@@ -99,22 +99,22 @@ function GetMonthString($n)
 
 function bitcoinvaluetoa($v)
 {
-	return sprintf('%.8f', round($v, 8, PHP_ROUND_HALF_DOWN));
+	return sprintf('%.8f', round((float) $v, 8, PHP_ROUND_HALF_DOWN));
 }
 
 function mbitcoinvaluetoa($v)
 {
-	return sprintf('%.5f', round($v, 5, PHP_ROUND_HALF_DOWN));
+	return sprintf('%.5f', round((float) $v, 5, PHP_ROUND_HALF_DOWN));
 }
 
 function altcoinvaluetoa($v)
 {
-	return sprintf('%.6f', round($v, 6, PHP_ROUND_HALF_DOWN));
+	return sprintf('%.6f', round((float) $v, 6, PHP_ROUND_HALF_DOWN));
 }
 
 function percentvaluetoa($v)
 {
-	return sprintf('%.3f', round($v, 3, PHP_ROUND_HALF_DOWN));
+	return sprintf('%.3f', round((float) $v, 3, PHP_ROUND_HALF_DOWN));
 }
 
 function timestampfromstr($str)
@@ -129,7 +129,7 @@ function timestampfromstr($str)
 
 function datetoa($d)
 {
-	if (strpos($d, ':')) {
+	if (strpos((string) $d, ':')) {
 		$d = timestampfromstr($d);
 	}
 
@@ -163,7 +163,7 @@ function datetoa($d)
 
 function datetoa2($d)
 {
-	if (strpos($d, ':')) {
+	if (strpos((string) $d, ':')) {
 		$d = timestampfromstr($d);
 	}
 
@@ -202,6 +202,7 @@ function sectoa($i)
 //	if($i < (60*60))
 //		return sprintf("%d:%02d", $i%(60*60)/60, $i%60);
 //	else
+		$i = (int) $i;
 		return sprintf("%d:%02d:%02d", $i/(60*60), $i%(60*60)/60, $i%60);
 }
 
@@ -344,7 +345,7 @@ function formatText($text)
 
 function formatWalletVersion($coin)
 {
-	$version = substr($coin->version, 0, 20);
+	$version = substr((string) $coin->version, 0, 20);
 	if (is_numeric($version)) {
 		$decver = sprintf("%08d", 0 + $version);
 		$version = intval(substr($decver, 0, 2)).'.'.intval(substr($decver, 2, 2)).

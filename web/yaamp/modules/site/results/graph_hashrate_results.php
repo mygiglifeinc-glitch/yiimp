@@ -37,7 +37,7 @@ foreach ($stats as $n)
     );
 }
 
-if ($averages[0][1] == 0) $averages[0][1] = $averages[1][1];
+if (count($averages) > 1 && $averages[0][1] == 0) $averages[0][1] = $averages[1][1];
 
 $avg2 = array();
 $average = $averages[0][1];

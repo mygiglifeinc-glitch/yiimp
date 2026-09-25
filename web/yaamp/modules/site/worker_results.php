@@ -93,7 +93,7 @@ foreach ($workers as $worker) {
     }
 
     $dns = !empty($worker->dns) ? $worker->dns : $worker->ip;
-    if (strlen($worker->dns) > 40)
+    if (strlen((string) $worker->dns) > 40)
         $dns = '...' . substr($worker->dns, strlen($worker->dns) - 40);
 
     echo "<tr class='ssrow'>";

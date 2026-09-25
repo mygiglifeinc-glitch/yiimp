@@ -426,7 +426,7 @@ foreach ($txs_array as $tx) {
     if ($category == 'immature') {
         if ($coin->block_time && $coin->mature_blocks) {
             $t   = (int) ($coin->mature_blocks - arraySafeVal($tx, 'confirmations', 0)) * $coin->block_time;
-            $eta = "ETA: " . sprintf('%dh %02dmn', ($t / 3600), ($t / 60) % 60);
+            $eta = "ETA: " . sprintf('%dh %02dmn', ($t / 3600), intdiv((int) $t, 60) % 60);
         }
     }
     echo '<td title="' . $eta . '">' . $category . '</td>';

@@ -37,6 +37,8 @@
  * @package system.db.ar
  * @since 1.0
  */
+// yaamp patch: models carry extra columns from custom SELECTs as properties
+#[AllowDynamicProperties]
 abstract class CActiveRecord extends CModel
 {
 	const BELONGS_TO='CBelongsToRelation';
