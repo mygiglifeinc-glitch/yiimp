@@ -8,7 +8,7 @@ class BenchController extends CommonController
 
 	public function actionIndex()
 	{
-		$algo = substr(getparam('algo'), 0, 32);
+		$algo = getalgoparam();
 		if ($algo) {
 			$a = dboscalar('SELECT count(id) FROM benchmarks WHERE algo LIKE :algo', array(':algo'=>$algo));
 			user()->setState('bench-algo', $a ? $algo : 'all');
@@ -16,6 +16,7 @@ class BenchController extends CommonController
 			$algo = user()->getState('bench-algo');
 		}
 		$vid = getparam('vid');
+		$vid = is_string($vid) ? preg_replace('/[^A-Za-z0-9:_.\-]/', '', substr($vid, 0, 32)) : '';
 		if ($vid) {
 			$a = dboscalar('SELECT count(id) FROM benchmarks WHERE vendorid LIKE :vendorid', array(':vendorid'=>$vid));
 			$vid = $a ? $vid : '';
@@ -44,7 +45,7 @@ class BenchController extends CommonController
 
 	public function actionAlgo()
 	{
-		$algo = substr(getparam('algo'), 0, 32);
+		$algo = getalgoparam();
 		if (!empty($algo))
 			$this->render('algo', array('algo'=>$algo));
 		else

@@ -358,8 +358,8 @@ YAAMP_JOB_TEMPLATE *coind_create_template(YAAMP_COIND *coind)
 	}
 
 	if (!templ->height || !templ->nbits || !strlen(templ->prevhash_hex)) {
-		stratumlog("%s warning, gbt incorrect : version=%s height=%d value=%d bits=%s time=%s prev=%s\n",
-			coind->symbol, templ->version, templ->height, templ->value, templ->nbits, templ->ntime, templ->prevhash_hex);
+		stratumlog("%s warning, gbt incorrect : version=%s height=%d value=%lld bits=%s time=%s prev=%s\n",
+			coind->symbol, templ->version, templ->height, (long long) templ->value, templ->nbits, templ->ntime, templ->prevhash_hex);
 	}
 
 	// temporary hack, until wallet is fixed...

@@ -54,9 +54,9 @@ function cryptohub_update_market($market)
 		return false;
 	}
 
-	$price2 = ((double) $ticker['highestBid'] + $ticker['lowestAsk']) / 2;
+	$price2 = ((float) $ticker['highestBid'] + $ticker['lowestAsk']) / 2;
 	$market->price2 = AverageIncrement($market->price2, $price2);
-	$market->price = AverageIncrement($market->price, (double) $ticker['highestBid']);
+	$market->price = AverageIncrement($market->price, (float) $ticker['highestBid']);
 	if ($ticker['lowestAsk'] < $market->price) $market->price = $ticker['lowestAsk'];
 	$market->pricetime = time();
 	$market->save();

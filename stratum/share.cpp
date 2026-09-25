@@ -145,7 +145,7 @@ void share_write(YAAMP_DB *db)
 
 		if(++count >= 1000)
 		{
-			db_query(db, buffer);
+			db_query(db, "%s", buffer);
 
 			strcpy(buffer, "insert into shares (userid, workerid, coinid, jobid, pid, valid, extranonce1, difficulty, share_diff, time, algo, error) values ");
 			count = 0;
@@ -155,7 +155,7 @@ void share_write(YAAMP_DB *db)
 	}
 
 	g_list_worker.Leave();
-	if(count) db_query(db, buffer);
+	if(count) db_query(db, "%s", buffer);
 }
 
 void share_prune(YAAMP_DB *db)
@@ -208,7 +208,7 @@ void block_prune(YAAMP_DB *db)
 	}
 
 	g_list_block.Leave();
-	if(count) db_query(db, buffer);
+	if(count) db_query(db, "%s", buffer);
 }
 
 void block_add(int userid, int workerid, int coinid, int height, double diff, double diff_user, const char *h1, const char *h2, int segwit)
@@ -338,7 +338,7 @@ void submit_prune(YAAMP_DB *db)
 
 		if(++count >= 1000)
 		{
-			db_query(db, buffer);
+			db_query(db, "%s", buffer);
 
 			strcpy(buffer, "insert into jobsubmits (jobid, valid, difficulty, time, algo, status) values ");
 			count = 0;
@@ -348,7 +348,7 @@ void submit_prune(YAAMP_DB *db)
 	}
 
 	g_list_submit.Leave();
-	if(count) db_query(db, buffer);
+	if(count) db_query(db, "%s", buffer);
 }
 
 

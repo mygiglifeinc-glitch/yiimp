@@ -23,6 +23,10 @@ class SiteController extends CommonController
         else
             debuglog("admin connect failure from $client_ip");
 
+        // new session id on privilege change (session fixation)
+        if ($valid && session_status() == PHP_SESSION_ACTIVE)
+            session_regenerate_id(true);
+
         user()->setState('yaamp_admin', $valid);
 
         $this->redirect("/site/common");
@@ -175,7 +179,7 @@ class SiteController extends CommonController
         if (!$this->admin)
             return;
         $coin       = getdbo('db_coins', getiparam('id'));
-        $spendlimit = (double) arraySafeVal($_POST, 'spendlimit');
+        $spendlimit = (float) arraySafeVal($_POST, 'spendlimit');
         $quantity   = (int) arraySafeVal($_POST, 'quantity');
         if ($coin && $spendlimit) {
             $remote = new WalletRPC($coin);
@@ -260,6 +264,7 @@ class SiteController extends CommonController
         if (!$this->admin)
             return;
 
+        $coin = null;
         $bookmark = getdbo('db_bookmarks', getiparam('id'));
         if ($bookmark) {
             $coin   = getdbo('db_coins', $bookmark->idcoin);
@@ -300,6 +305,7 @@ class SiteController extends CommonController
             }
         }
 
+        if (!$coin) $this->goback();
         $this->redirect(array(
             'site/coin',
             'id' => $coin->id
@@ -389,11 +395,11 @@ class SiteController extends CommonController
         $valid                = true;
         $rule                 = new db_notifications;
         $rule->idcoin         = $coin->id;
-        $rule->notifytype     = $_POST['notifytype'];
-        $rule->conditiontype  = $_POST['conditiontype'];
-        $rule->conditionvalue = $_POST['conditionvalue'];
-        $rule->notifycmd      = $_POST['notifycmd'];
-        $rule->description    = $_POST['description'];
+        $rule->notifytype     = arraySafeVal($_POST, 'notifytype', '');
+        $rule->conditiontype  = arraySafeVal($_POST, 'conditiontype', '');
+        $rule->conditionvalue = arraySafeVal($_POST, 'conditionvalue', '');
+        $rule->notifycmd      = arraySafeVal($_POST, 'notifycmd', '');
+        $rule->description    = arraySafeVal($_POST, 'description', '');
         $rule->enabled        = 1;
         $rule->lastchecked    = 0; // time
         $rule->lasttriggered  = 0;
@@ -467,6 +473,10 @@ class SiteController extends CommonController
         $algo     = user()->getState('yaamp-algo');
         $memcache = controller()->memcache->memcache;
         $memkey   = $algo . '_' . str_replace('/', '_', $partial);
+        // some query params change the output (found_results?algo=&count=)
+        $params   = array_intersect_key($_GET, array('algo' => 1, 'count' => 1));
+        if (!empty($params))
+            $memkey .= '_' . md5(serialize($params));
         $html     = controller()->memcache->get($memkey);
 
         if (!empty($html)) {
@@ -1212,8 +1222,9 @@ class SiteController extends CommonController
         else
             user()->setState('yaamp-algo', 'all');
 
+        // only allow local paths, to not be usable as an open redirect
         $route = getparam('r');
-        if (!empty($route))
+        if (is_string($route) && preg_match('#^/(?![/\\\\])#', $route) && !preg_match('#[\\x00-\\x1f]#', $route))
             $this->redirect($route);
         else
             $this->goback();
@@ -1222,7 +1233,7 @@ class SiteController extends CommonController
     public function actionGomining()
     {
         $algo = getalgoparam();
-        if ($algo == 'all') {
+        if ($algo == 'all' || empty($algo)) {
             return;
         }
         user()->setState('yaamp-algo', $algo);
@@ -1265,6 +1276,8 @@ class SiteController extends CommonController
 
     public function actionOptimize()
     {
+        if (!$this->admin)
+            return;
         BackendOptimizeTables();
         $this->goback();
     }

@@ -43,7 +43,6 @@ function bleutrade_api_query($method, $params='')
 		debuglog("bleutrade: $method failed ($status) ".strip_data($data).' '.curl_error($ch));
 	}
 
-	curl_close($ch);
 
 	return $obj;
 }

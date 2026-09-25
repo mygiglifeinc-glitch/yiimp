@@ -1,5 +1,9 @@
 <?php
 
+// Yii turns every reported PHP notice into an exception (a 500 error page).
+// Don't let deprecation notices from newer PHP releases break the pool.
+error_reporting(E_ALL & ~E_DEPRECATED);
+
 //define('YII_DEBUG', true);
 
 require_once('serverconfig.php');
@@ -31,6 +35,9 @@ catch(CException $e)
 {
 //	Javascript("window.history.go(-1)");
 //	mydump($e, 3);
+
+	if ($e instanceof CHttpException && !headers_sent())
+		http_response_code($e->statusCode);
 
 	debuglog("front end error ".$_SERVER['REMOTE_ADDR']);
 	debuglog($e->getMessage());

@@ -44,11 +44,9 @@ function empoex_api_user($method, $params = "")
 	{
 		$e = curl_error($ch);
 		debuglog($e);
-		curl_close($ch);
 		return null;
 	}
 
-	curl_close($ch);
 
 	$result = json_decode($res, true);
 	if(!$result) debuglog(strip_tags($res));

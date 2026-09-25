@@ -80,7 +80,7 @@ foreach ($recents as $address)
     //	debuglog($address);
     echo "<tr class='ssrow'><td width=24>";
     echo "<img width=16 src='/images/btc.png'>";
-    echo "</td><td><a href='/renting/login?address=$renter->address' style='font-family: monospace; font-size: 1.1em;'>$address</a></td>";
+    echo "</td><td><a href='/renting/login?address=$renter->address' style='font-family: monospace; font-size: 1.1em;'>".CHtml::encode($address)."</a></td>";
     echo "<tr>";
 }
 

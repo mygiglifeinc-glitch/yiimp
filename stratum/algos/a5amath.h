@@ -4,6 +4,8 @@
 #ifndef a5a_MATH_H
 #define a5a_MATH_H
 
+#include <stdint.h>
+
 double exp_n(double xt);
 double exp_n2(double x1, double x2);
 void gauleg(double x1, double x2, double x[], double w[], int n);

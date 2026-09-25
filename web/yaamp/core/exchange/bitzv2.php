@@ -258,7 +258,6 @@ if (!defined('EXCH_BITZ_TRADEPWD')) define('EXCH_BITZ_TRADEPWD', '');
         }
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
         $output = curl_exec($curl);
-        curl_close($curl);
         return $output;
     }
 }

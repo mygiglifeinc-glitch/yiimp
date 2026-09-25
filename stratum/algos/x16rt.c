@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "sha256-d.h"
+#include "x16rt.h"
 #include <sha3/sph_blake.h>
 #include <sha3/sph_bmw.h>
 #include <sha3/sph_groestl.h>

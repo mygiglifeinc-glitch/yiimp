@@ -41,9 +41,9 @@ foreach ($list as $job)
     $hashrate = $hashrate ? Itoa2($hashrate) . 'h/s' : '';
 
     $maxhash = $job->speed ? Itoa2($job->speed) . 'h/s' : '';
-    $title = "-o stratum+tcp://$job->host:$job->port -u $job->username -p $job->password";
+    $title = CHtml::encode("-o stratum+tcp://$job->host:$job->port -u $job->username -p $job->password");
 
-    $servername = substr($job->host, 0, 22);
+    $servername = CHtml::encode(substr($job->host, 0, 22));
     $price = mbitcoinvaluetoa($job->price);
 
     $rent = dboscalar("select rent from hashrate where algo=:algo order by time desc limit 1", array(

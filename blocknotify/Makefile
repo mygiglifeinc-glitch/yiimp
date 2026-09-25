@@ -1,20 +1,21 @@
 
-CC=gcc
+CXX=g++
 
-CFLAGS=-c -g -I /usr/include/mysql -march=native
-LDFLAGS=-g
-
-#CFLAGS=-c -O2 -I /usr/include/mysql
-#LDFLAGS=-O2
-
-LDLIBS=-lstdc++
+CXXFLAGS=-g -O2 -Wall
+LDFLAGS=
 
 SOURCES=blocknotify.cpp
 
 OBJECTS=$(SOURCES:.cpp=.o)
 OUTPUT=blocknotify
 
-all: $(SOURCES) $(OUTPUT)
+all: $(OUTPUT)
+
+$(OUTPUT): $(OBJECTS)
+	$(CXX) $(LDFLAGS) $(OBJECTS) -o $@
+
+.cpp.o:
+	$(CXX) $(CXXFLAGS) -c $<
 
 install: all
 	strip -s $(OUTPUT)

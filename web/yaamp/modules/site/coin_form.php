@@ -341,6 +341,12 @@ echo CUFHtml::activeTextField($coin, 'rpcencoding', array('maxlength'=>5,'style'
 echo '<p class="formHint2">POW/POS</p>';
 echo CUFHtml::closeCtrlHolder();
 
+echo CUFHtml::openActiveCtrlHolder($coin, 'dedicatedport');
+echo CUFHtml::activeLabelEx($coin, 'dedicatedport');
+echo CUFHtml::activeTextField($coin, 'dedicatedport', array('maxlength'=>5,'style'=>'width: 60px;'));
+echo '<p class="formHint2">Stratum port for this coin only (run addport to get one), empty to use the algo port</p>';
+echo CUFHtml::closeCtrlHolder();
+
 echo CUFHtml::openActiveCtrlHolder($coin, 'rpccurl');
 echo CUFHtml::activeLabelEx($coin, 'rpccurl');
 echo CUFHtml::activeCheckBox($coin, 'rpccurl');
@@ -398,6 +404,7 @@ echo "<b>If you manually built a coin without daemonbuilder, copy this entire se
 echo CHtml::opentag("pre");
 echo "mkdir -p {$coin->conf_folder}\n";
 $port = getAlgoPort($coin->algo);
+if (!empty($coin->dedicatedport)) $port = intval($coin->dedicatedport);
 echo "echo '\n";
 echo " \n";
 echo "rpcuser={$coin->rpcuser}\n";

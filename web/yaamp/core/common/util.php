@@ -59,7 +59,11 @@ function getiparam($p, $default = 0)
 
 function getalgoparam()
 {
-    $algo = strip_tags(substr(getparam('algo') , 0, 32));
+    // algo names are only made of [a-z0-9_.-], the value is stored in the
+    // session and echoed in pages, so drop anything else
+    $algo = getparam('algo');
+    if (!is_string($algo)) return '';
+    $algo = preg_replace('/[^A-Za-z0-9_.\-]/', '', substr($algo, 0, 32));
     return $algo;
 }
 
@@ -247,7 +251,6 @@ function file_get_contents_curl($url, $user = null)
     curl_setopt($ch, CURLOPT_WRITEFUNCTION, $callback);
 
     curl_exec($ch);
-    curl_close($ch);
 
     //	debuglog(" total read $totalread, ".strlen($data));
     return $data;

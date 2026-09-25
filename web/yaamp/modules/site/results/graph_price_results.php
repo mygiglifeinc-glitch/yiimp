@@ -11,7 +11,7 @@ $stats = getdbolist('db_hashrate', "time >= $t AND algo=:algo ORDER BY time", ar
     ':algo' => $algo
 ));
 $tfirst = empty($stats) ? $t : $stats[0]->time;
-$pfirst = empty($stats) ? 0.0 : (double)altcoinvaluetoa($stats[0]->price);
+$pfirst = empty($stats) ? 0.0 : (float)altcoinvaluetoa($stats[0]->price);
 $averages = array();
 
 for ($i = 0;$i < 95 - count($stats);$i++)
@@ -27,7 +27,7 @@ for ($i = 0;$i < 95 - count($stats);$i++)
 
 foreach ($stats as $n)
 {
-    $m = (double)altcoinvaluetoa($n->price);
+    $m = (float)altcoinvaluetoa($n->price);
     $d = date('Y-m-d H:i:s', $n->time);
     $averages[] = array(
         $d,

@@ -136,20 +136,20 @@ void *remote_thread(void *p)
 		}
 
 		else if(remote->status == YAAMP_REMOTE_SUBSCRIBE)
-			socket_send(remote->sock, message_subscribe);
+			socket_send(remote->sock, "%s", message_subscribe);
 
 		else if(remote->status == YAAMP_REMOTE_AUTHORIZE)
 		{
 			char message_authorize[2*1024];
-			sprintf(message_authorize, "{\"id\":2,\"method\":\"mining.authorize\",\"params\":[\"%s\",\"%s\"]}\n",
+			snprintf(message_authorize, sizeof(message_authorize), "{\"id\":2,\"method\":\"mining.authorize\",\"params\":[\"%s\",\"%s\"]}\n",
 				remote->username, remote->password);
 
-			socket_send(remote->sock, message_authorize);
+			socket_send(remote->sock, "%s", message_authorize);
 		}
 
 		else if(remote->status == YAAMP_REMOTE_EXTRANONCE)
 		{
-			socket_send(remote->sock, message_extranonce);
+			socket_send(remote->sock, "%s", message_extranonce);
 			remote->status = YAAMP_REMOTE_READY;
 		}
 

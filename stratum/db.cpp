@@ -44,7 +44,7 @@ void db_close(YAAMP_DB *db)
 char *db_clean_string(YAAMP_DB *db, char *string)
 {
 	char *c = string;
-	size_t i, len = strlen(string) & 0x1FF;
+	size_t i, len = strlen(string);
 	for (i = 0; i < len; i++) {
 		bool isdigit = (c[i] >= '0' && c[i] <= '9');
 		bool isalpha = (c[i] >= 'a' && c[i] <= 'z') || (c[i] >= 'A' && c[i] <= 'Z');
@@ -59,9 +59,12 @@ char *db_clean_string(YAAMP_DB *db, char *string)
 static void clean_html(char* string)
 {
 	char *c = string;
-	size_t i, len = strlen(string) & 0x1FF;
+	size_t i, len = strlen(string);
 	for (i = 0; i < len; i++) {
-		if (c[i] == '<' || c[i] == '>' || c[i] == '%' || c[i] == '\\' || c[i] == '"' || c[i] == '\'') {
+		// control chars are also refused: mysql_real_escape_string() would
+		// expand them (\n, \r, \Z...) and the result could then be truncated
+		if ((unsigned char) c[i] < 0x20 || c[i] == 0x7f ||
+			c[i] == '<' || c[i] == '>' || c[i] == '%' || c[i] == '\\' || c[i] == '"' || c[i] == '\'') {
 			c[i] = '\0'; break;
 		}
 	}
@@ -71,13 +74,18 @@ static void clean_html(char* string)
 void db_query(YAAMP_DB *db, const char *format, ...)
 {
 	va_list arglist;
-	va_start(arglist, format);
 	if(!db) return;
 
-	char *buffer = (char *)malloc(YAAMP_SMALLBUFSIZE+strlen(format));
+	va_start(arglist, format);
+	int len = vsnprintf(NULL, 0, format, arglist);
+	va_end(arglist);
+	if(len < 0) return;
+
+	char *buffer = (char *)malloc((size_t)len + 1);
 	if(!buffer) return;
 
-	int len = vsprintf(buffer, format, arglist);
+	va_start(arglist, format);
+	vsnprintf(buffer, (size_t)len + 1, format, arglist);
 	va_end(arglist);
 
 	while(!g_exiting)
@@ -131,7 +139,7 @@ void db_update_algos(YAAMP_DB *db)
 		if (g_list_coind.first) {
 			CLI li = g_list_coind.first;
 			YAAMP_COIND *coind = (YAAMP_COIND *)li->data;
-			sprintf(symbol,"'%s'", coind->symbol);
+			snprintf(symbol, sizeof(symbol), "'%.13s'", coind->symbol);
 		}
 	}
 
@@ -550,15 +558,17 @@ static void _json_str_safe(YAAMP_DB *db, json_value *json, const char *key, size
 {
 	json_value *val = json_get_val(json, key);
 	out[0] = '\0';
-	if (db && val && json_is_string(val)) {
+	if (db && val && json_is_string(val) && maxlen > 0) {
 		char str[128] = { 0 };
-		char escaped[256] = { 0 };
-		snprintf(str, sizeof(str)-1, "%s", json_string_value(val));
-		str[maxlen-1] = '\0'; // truncate to dest len
+		char escaped[2*sizeof(str)+1] = { 0 };
+		snprintf(str, sizeof(str), "%s", json_string_value(val));
+		if (maxlen < sizeof(str)) str[maxlen-1] = '\0'; // truncate to dest len
 		clean_html(str);
-		mysql_real_escape_string(&db->mysql, escaped, str, strlen(str));
-		snprintf(out, maxlen, "%s", escaped);
-		out[maxlen-1] = '\0';
+		unsigned long len = mysql_real_escape_string(&db->mysql, escaped, str, strlen(str));
+		// the escaped string must never be truncated (a trailing backslash
+		// would escape the closing quote of the SQL string)
+		if (len < maxlen)
+			memcpy(out, escaped, len + 1);
 	}
 }
 #define json_str_safe(stats, k, out) _json_str_safe(db, stats, k, sizeof(out), out)

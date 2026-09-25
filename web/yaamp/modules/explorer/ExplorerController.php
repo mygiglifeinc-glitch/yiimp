@@ -131,15 +131,16 @@ class ExplorerController extends CommonController
         $txid = gethexparam('txid');
         $hash = gethexparam('hash');
         $q = gethexparam('q');
+        $url = "/explorer?";
         if (isset($_GET['SYM']))
         {
             // only for visible coins
-            $url = "/explorer/" . $_GET['SYM'] . "?";
+            $url = "/explorer/" . preg_replace('/[^A-Za-z0-9_\-]/', '', (is_string($_GET['SYM']) ? $_GET['SYM'] : '')) . "?";
         }
         else if (isset($_GET['id']))
         {
             // only for hidden coins
-            $url = "/explorer/" . $_GET['id'] . "?";
+            $url = "/explorer/" . intval($_GET['id']) . "?";
         }
         if (!empty($height)) $url .= "&height=$height";
         if (!empty($txid)) $url .= "&txid=$txid";

@@ -75,7 +75,7 @@ foreach ($list as $renter)
 
     echo "<td>$renter->id</td>";
     echo "<td><a href='/renting?address=$renter->address'>$renter->address</a></td>";
-    echo "<td>$renter->email</td>";
+    echo "<td>".CHtml::encode($renter->email)."</td>";
     echo "<td>$renter->spent</td>";
     echo "<td>$renter->balance</td>";
     echo "<td>$renter->unconfirmed</td>";
@@ -122,7 +122,7 @@ foreach ($list as $job)
     echo "<td>$job->id</td>";
     echo "<td><a href='/renting?address=$renter->address'>$renter->address</a></td>";
     echo "<td><a href='/site/gomining?algo=$job->algo'>$job->algo</td>";
-    echo "<td>$job->host:$job->port</td>";
+    echo "<td>".CHtml::encode("$job->host:$job->port")."</td>";
     echo "<td>$job->price</td>";
     echo "<td>$speed</td>";
     echo "<td>$hashrate</td>";

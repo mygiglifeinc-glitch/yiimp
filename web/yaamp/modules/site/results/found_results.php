@@ -9,6 +9,7 @@ function WriteBoxHeader($title)
 $showrental = (bool)YAAMP_RENTAL;
 
 $algo_from_query_param = getparam('algo');
+if (!is_string($algo_from_query_param)) $algo_from_query_param = '';
 if ($algo_from_query_param)
 {
     // Query param is set
@@ -30,8 +31,8 @@ else
     }
 }
 
-$count = getparam('count');
-$count = $count ? $count : 50;
+$count = intval(getparam('count'));
+$count = ($count > 0 && $count <= 500) ? $count : 50;
 
 $algo_header = isset($r_algo) ? implode(',', $r_algo) : 'any algo';
 WriteBoxHeader("Last $count Blocks ($algo_header)");
@@ -127,7 +128,7 @@ foreach ($db_blocks as $db_block)
         if ($coin->block_time && $coin->mature_blocks)
         {
             $t = (int)($coin->mature_blocks - $db_block->confirmations) * $coin->block_time;
-            $eta = "ETA: " . sprintf('%dh %02dmn', ($t / 3600) , ($t / 60) % 60);
+            $eta = "ETA: " . sprintf('%dh %02dmn', ($t / 3600) , intdiv((int) $t, 60) % 60);
         }
         echo '<span class="block immature" title="' . $eta . '">Immature (' . $db_block->confirmations . ')</span>';
     }

@@ -237,7 +237,7 @@ function BackendStatsUpdate()
     foreach (yaamp_get_algos() as $algo) {
         $factor = yaamp_get_algo_norm($algo);
 
-        $dbalgo = getdbosql('db_algos', "name='$algo'");
+        $dbalgo = getdbosql('db_algos', "name=:name", array(':name'=>$algo));
         if (!$dbalgo) {
             $dbalgo       = new db_algos;
             $dbalgo->name = $algo;

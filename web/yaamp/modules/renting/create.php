@@ -30,7 +30,7 @@ $renter->save();
 $renter = getdbo('db_renters', $renter->id);
 $renter->address = $remote->getaccountaddress(yaamp_renter_account($renter));
 
-$renter->apikey = hash("sha256", $renter->address . time() . rand());
+$renter->apikey = bin2hex(random_bytes(32));
 $renter->save();
 
 $received1 = $remote->getbalance(yaamp_renter_account($renter) , 1);

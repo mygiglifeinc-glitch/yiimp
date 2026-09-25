@@ -321,7 +321,7 @@ if (!empty($txs)) {
     $tx = reset($txs);
 
     if (count($txs) == $maxrows && isset($tx['time']))
-        $lastday = strftime('%F', $tx['time']);
+        $lastday = date('Y-m-d', $tx['time']);
 
     if (!empty($txs))
         foreach ($txs as $tx) {
@@ -395,7 +395,7 @@ if ($DCR) {
         }
         // for truncated day sums
         if ($lastday == '' && count($txs) == $maxrows)
-            $lastday = strftime('%F', $tx['time']);
+            $lastday = date('Y-m-d', $tx['time']);
     }
     if ($info['version'] < 1010200)
         ksort($txs_array); // was in reversed order
@@ -426,7 +426,7 @@ foreach ($txs_array as $tx) {
     if ($category == 'immature') {
         if ($coin->block_time && $coin->mature_blocks) {
             $t   = (int) ($coin->mature_blocks - arraySafeVal($tx, 'confirmations', 0)) * $coin->block_time;
-            $eta = "ETA: " . sprintf('%dh %02dmn', ($t / 3600), ($t / 60) % 60);
+            $eta = "ETA: " . sprintf('%dh %02dmn', ($t / 3600), intdiv((int) $t, 60) % 60);
         }
     }
     echo '<td title="' . $eta . '">' . $category . '</td>';
@@ -499,7 +499,7 @@ foreach ($txs_array as $tx) {
     if (!isset($tx['time']))
         continue;
 
-    $day = strftime('%F', $tx['time']); // YYYY-MM-DD
+    $day = date('Y-m-d', $tx['time']); // YYYY-MM-DD
     if ($day == $lastday)
         break; // do not show truncated days
 

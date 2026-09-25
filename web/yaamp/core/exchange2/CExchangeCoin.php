@@ -1,6 +1,6 @@
 <?php
 
-class CExchangeCoin
+abstract class CExchangeCoin
 {
 	public $marketname;
 
@@ -24,7 +24,7 @@ class CExchangeCoin
 		$this->coin = $coin;
 		$this->marketname = $marketname;
 
-		$this->market = getdbosql('db_markets', "coinid=$coin->id and name='$marketname'");
+		$this->market = getdbosql('db_markets', "coinid=$coin->id and name=:name", array(':name'=>$marketname));
 		if(!$this->market) return;
 	}
 
@@ -47,7 +47,7 @@ class CExchangeCoin
 
 /*
 
-class CExchangeCoinCryptsy extends CExchangeCoin
+abstract class CExchangeCoinCryptsy extends CExchangeCoin
 {
 	private $marketid;
 
