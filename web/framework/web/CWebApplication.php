@@ -349,6 +349,9 @@ class CWebApplication extends CApplication
 			$className=ucfirst($id).'Controller';
 			$classFile=$basePath.DIRECTORY_SEPARATOR.$className.'.php';
 
+			// yaamp patch: controllers live in yaamp/modules/<name>/
+			$classFile=GetSSModulePath($className);
+
 			if($owner->controllerNamespace!==null)
 				$className=$owner->controllerNamespace.'\\'.str_replace('/','\\',$controllerID).$className;
 
