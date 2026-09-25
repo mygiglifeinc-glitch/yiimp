@@ -25,10 +25,10 @@ function settings_get($key, $default=null)
 	case 'int':
 		return intval($value);
 	case 'percent':
-		return ((double) $value) / 100.0;
+		return ((float) $value) / 100.0;
 	case 'price':
 	case 'real':
-		return (double) $value;
+		return (float) $value;
 	case 'json':
 		return json_decode($value, true);
 	}
@@ -228,7 +228,7 @@ $cacheset_coin = array();
 function coin_settings_prefetch($symbol)
 {
 	global $cacheset_coin;
-	$settings = dbocolumn("SELECT param FROM settings WHERE param LIKE 'coin-{$symbol}-%'");
+	$settings = dbocolumn("SELECT param FROM settings WHERE param LIKE :prefix", array(':prefix'=>"coin-{$symbol}-%"));
 	if (!$settings) return array();
 	foreach ($settings as $key) {
 		$cacheset_coin[$key] = settings_get($key);
@@ -280,7 +280,7 @@ function coin_set_default($symbol, $key, $value)
 	return $res;
 }
 
-function coin_unset($exchange, $symbol, $key)
+function coin_unset($symbol, $key)
 {
 	global $cacheset_coin;
 	$cacheset_coin = array();

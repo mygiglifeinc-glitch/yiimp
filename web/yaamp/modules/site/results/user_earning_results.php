@@ -11,13 +11,12 @@ $algo = user()->getState('yaamp-algo');
 $user = getuserparam(getparam('address'));
 if (!$user || $user->is_locked) return;
 
-$count = getparam('count');
-$count = $count ? $count : 50;
+// LIMIT only accepts an integer; a quoted bound string is a SQL error
+$count = intval(getparam('count'));
+$count = ($count > 0 && $count <= 1000) ? $count : 50;
 
 WriteBoxHeader("Last $count Earnings: $user->username");
-$earnings = getdbolist('db_earnings', "userid=$user->id order by create_time desc limit :count", array(
-    ':count' => $count
-));
+$earnings = getdbolist('db_earnings', "userid=$user->id order by create_time desc limit $count");
 
 echo <<<EOT
 
@@ -101,7 +100,7 @@ foreach ($earnings as $earning)
         if ($coin->block_time && $coin->mature_blocks)
         {
             $t = (int)($coin->mature_blocks - $block->confirmations) * $coin->block_time;
-            $eta = "ETA: " . sprintf('%dh %02dmn', ($t / 3600) , ($t / 60) % 60);
+            $eta = "ETA: " . sprintf('%dh %02dmn', ($t / 3600) , intdiv((int) $t, 60) % 60);
         }
         echo '<span class="block immature" title="' . $eta . '">Immature (' . $block->confirmations . ')</span>';
     }

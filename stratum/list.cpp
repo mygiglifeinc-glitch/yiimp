@@ -16,7 +16,7 @@ void CommonLock(pthread_mutex_t *mutex)
 		}
 
 		if(i == 10)
-			debuglog("failed mutex2 %x <<----------------\n", mutex);
+			debuglog("failed mutex2 %p <<----------------\n", (void *) mutex);
 	} else {
 		pthread_mutex_lock(mutex);
 	}
@@ -54,7 +54,7 @@ void CommonList::Enter()
 		}
 
 		if(i == 10)
-			debuglog("failed mutex1 %x <<----------------\n", &mutex);
+			debuglog("failed mutex1 %p <<----------------\n", (void *) &mutex);
 	} else {
 		pthread_mutex_lock(&mutex);
 	}

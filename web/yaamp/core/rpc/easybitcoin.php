@@ -199,7 +199,6 @@ class Bitcoin {
 		// If there was no error, this will be an empty string
 		$curl_error = curl_error($curl);
 
-		curl_close($curl);
 //      debuglog($this->response);
 
 		if (!empty($curl_error)) {

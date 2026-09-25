@@ -32,7 +32,10 @@ END;
 
 
 $tx = $remote->getrawtransaction($txhash, 1);
-if (!$tx) continue;
+if (!$tx) {
+	echo '<tr><td colspan="4">Transaction not found</td></tr></tbody></table>';
+	return;
+}
 
 $valuetx = 0;
 foreach ($tx['vout'] as $vout) $valuetx += $vout['value'];

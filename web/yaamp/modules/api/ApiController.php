@@ -4,6 +4,16 @@ class ApiController extends CommonController
 {
     public $defaultAction = 'status';
 
+    // all api answers are json, don't let a browser render them as html
+    protected function beforeAction($action)
+    {
+        if (!parent::beforeAction($action)) return false;
+        if (!headers_sent()) {
+            header('Content-Type: application/json; charset=utf-8');
+        }
+        return true;
+    }
+
     /////////////////////////////////////////////////
 
     public function actionStatus()
@@ -66,7 +76,7 @@ class ApiController extends CommonController
                 ':algo' => $algo
             ));
 
-            $hashrate1 = (double) controller()->memcache->get_database_scalar("api_status_avghashrate-$algo", "select avg(hashrate) from hashrate where time>$t and algo=:algo", array(
+            $hashrate1 = (float) controller()->memcache->get_database_scalar("api_status_avghashrate-$algo", "select avg(hashrate) from hashrate where time>$t and algo=:algo", array(
                 ':algo' => $algo
             ));
 
@@ -80,14 +90,14 @@ class ApiController extends CommonController
                 "name" => $algo,
                 "port" => (int) $port,
                 "coins" => $coins,
-                "fees" => (double) $fees,
-                "hashrate" => (double) $hashrate,
+                "fees" => (float) $fees,
+                "hashrate" => (float) $hashrate,
                 "workers" => (int) $workers,
                 "estimate_current" => $price,
                 "estimate_last24h" => $avgprice,
                 "actual_last24h" => $btcmhday1,
                 "mbtc_mh_factor" => $algo_unit_factor,
-                "hashrate_last24h" => (double) $hashrate1
+                "hashrate_last24h" => (float) $hashrate1
             );
             if (YAAMP_RENTAL) {
                 $stat["rental_current"] = $rental;
@@ -154,10 +164,10 @@ class ApiController extends CommonController
                 // we need to compute the % of the coin compared to others with the same algo
                 if ($workers > 0) {
 
-                    $algohr        = (double) dboscalar("SELECT SUM(difficulty) AS algo_hr FROM shares WHERE time>$since AND algo=:algo", array(
+                    $algohr        = (float) dboscalar("SELECT SUM(difficulty) AS algo_hr FROM shares WHERE time>$since AND algo=:algo", array(
                         ':algo' => $coin->algo
                     ));
-                    $factor        = ($algohr > 0 && !empty($shares)) ? (double) $shares['coin_hr'] / $algohr : 1.;
+                    $factor        = ($algohr > 0 && !empty($shares)) ? (float) $shares['coin_hr'] / $algohr : 1.;
                     $algo_hashrate = controller()->memcache->get_database_scalar("api_status_hashrate-{$coin->algo}", "SELECT hashrate FROM hashrate WHERE algo=:algo ORDER BY time DESC LIMIT 1", array(
                         ':algo' => $coin->algo
                     ));
@@ -292,7 +302,7 @@ class ApiController extends CommonController
             echo "\"password\": " . json_encode($worker->password) . ", ";
             echo "\"ID\": " . json_encode($worker->worker) . ", ";
             echo "\"algo\": \"{$worker->algo}\", ";
-            echo "\"difficulty\": " . doubleval($worker->difficulty) . ", ";
+            echo "\"difficulty\": " . floatval($worker->difficulty) . ", ";
             echo "\"subscribe\": " . intval($worker->subscribe) . ", ";
             echo "\"accepted\": " . round($user_rate1, 3) . ", ";
             echo "\"rejected\": " . round($user_rate1_bad, 3);
@@ -335,6 +345,8 @@ class ApiController extends CommonController
             return;
 
         $key    = getparam('key');
+        if (!is_string($key) || strlen($key) < 16)
+            return;
         $renter = getdbosql('db_renters', "apikey=:apikey", array(
             ':apikey' => $key
         ));
@@ -384,6 +396,8 @@ class ApiController extends CommonController
             return;
 
         $key    = getparam('key');
+        if (!is_string($key) || strlen($key) < 16)
+            return;
         $renter = getdbosql('db_renters', "apikey=:apikey", array(
             ':apikey' => $key
         ));
@@ -393,8 +407,8 @@ class ApiController extends CommonController
         $jobid = getparam('jobid');
         $price = getparam('price');
 
-        $job = getdbo('db_jobs', $jobid);
-        if ($job->renterid != $renter->id)
+        $job = getdbo('db_jobs', intval($jobid));
+        if (!$job || $job->renterid != $renter->id)
             return;
 
         $job->price = $price;
@@ -408,6 +422,8 @@ class ApiController extends CommonController
             return;
 
         $key    = getparam('key');
+        if (!is_string($key) || strlen($key) < 16)
+            return;
         $renter = getdbosql('db_renters', "apikey=:apikey", array(
             ':apikey' => $key
         ));
@@ -417,8 +433,8 @@ class ApiController extends CommonController
         $jobid    = getparam('jobid');
         $hashrate = getparam('hashrate');
 
-        $job = getdbo('db_jobs', $jobid);
-        if ($job->renterid != $renter->id)
+        $job = getdbo('db_jobs', intval($jobid));
+        if (!$job || $job->renterid != $renter->id)
             return;
 
         $job->speed = $hashrate;
@@ -432,6 +448,8 @@ class ApiController extends CommonController
             return;
 
         $key    = getparam('key');
+        if (!is_string($key) || strlen($key) < 16)
+            return;
         $renter = getdbosql('db_renters', "apikey=:apikey", array(
             ':apikey' => $key
         ));
@@ -440,8 +458,8 @@ class ApiController extends CommonController
 
         $jobid = getparam('jobid');
 
-        $job = getdbo('db_jobs', $jobid);
-        if ($job->renterid != $renter->id)
+        $job = getdbo('db_jobs', intval($jobid));
+        if (!$job || $job->renterid != $renter->id)
             return;
 
         $job->ready = true;
@@ -455,6 +473,8 @@ class ApiController extends CommonController
             return;
 
         $key    = getparam('key');
+        if (!is_string($key) || strlen($key) < 16)
+            return;
         $renter = getdbosql('db_renters', "apikey=:apikey", array(
             ':apikey' => $key
         ));
@@ -463,8 +483,8 @@ class ApiController extends CommonController
 
         $jobid = getparam('jobid');
 
-        $job = getdbo('db_jobs', $jobid);
-        if ($job->renterid != $renter->id)
+        $job = getdbo('db_jobs', intval($jobid));
+        if (!$job || $job->renterid != $renter->id)
             return;
 
         $job->ready = false;

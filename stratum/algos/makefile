@@ -1,11 +1,12 @@
 
 CC=gcc
+CXX=g++
 
 #CFLAGS=-c -g -I /usr/include/mysql
 #LDFLAGS=-g
 
-CXXFLAGS = -O2 -I.. -march=native
-CFLAGS= $(CXXFLAGS) -std=gnu99
+CXXFLAGS = -O2 -I.. -march=native -MMD -MP
+CFLAGS= $(CXXFLAGS) -std=gnu17
 LDFLAGS=-O2 -lgmp
 
 SOURCES=lyra2re.c lyra2v2.c lyra2v3.c Lyra2.c lyra2z.c Lyra2-z.c lyra2zz.c Lyra2-zz.c lyra2z330.c lyra2vc0ban.c Sponge.c allium.c \
@@ -22,24 +23,27 @@ SOURCES=lyra2re.c lyra2v2.c lyra2v3.c Lyra2.c lyra2z.c Lyra2-z.c lyra2zz.c Lyra2
 	phi.c phi2.c polytimos.c rainforest.c skunk.c sib.c veltor.c gost.c aergo.c x20r.c x21s.c lbk3.c pipehash.c gltalgos.c \
 	yespower/yespower-platform.c yespower/yespower-combined.c sha256-P.c dedal.c phi1612.c bcd.c \
 
-OBJECTS=$(SOURCES:%.c=%.o) $(SOURCES:%.cpp=%.o) $(SOURCES:%.cc=%.o)
+OBJECTS=$(patsubst %.cpp,%.o,$(SOURCES:.c=.o))
 OUTPUT=libalgos.a
 
-all: $(SOURCES) $(OUTPUT)
+all: $(OUTPUT)
 
 $(OUTPUT): $(OBJECTS)
-	ar rc $@ $(OBJECTS)
-	touch ../stratum.cpp
+	rm -f $@
+	ar rcs $@ $(OBJECTS)
 
 .cpp.o:
-	$(CC) $(CXXFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 .c.o:
 	$(CC) $(CFLAGS) -c $< -o $@
 
 #	$(CC) $(CFLAGS) -std=gnu99 -Wno-pointer-sign -Wno-pointer-to-int-cast -funroll-loops -fvariable-expansion-in-unroller -fmerge-all-constants -fbranch-target-load-optimize2 -fsched2-use-superblocks -falign-loops=16 -falign-functions=16 -falign-jumps=16 -falign-labels=16 -Ofast -flto -fuse-linker-plugin -ftree-loop-if-convert-stores -DUSE_ASM -pg $<
 
+-include $(OBJECTS:.o=.d)
+
 clean:
+	rm -f $(OBJECTS) $(OBJECTS:.o=.d) $(OUTPUT)
 	rm -f *.o
 	rm -f ar2/*.o
 	rm -f blake2/*.o

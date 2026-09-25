@@ -24,14 +24,25 @@ function BackendDoBackup()
     $d        = date('Y-m-d-H', time());
     $filename = YIIMP_MYSQLDUMP_PATH . DIRECTORY_SEPARATOR . "$db-$d.sql";
 
-    if (1) {
-        // faster on huge databases if the disk is fast (nvme), reduce the db lock time
-        system("mysqldump -h $host -u$user -p$pass --skip-extended-insert $db > $filename");
-        shell_exec("$ziptool $filename &"); // compress then the .sql in background (db is no more locked)
-    } else {
-        // previous method (ok on small pools)
-        system("mysqldump -h $host -u$user -p$pass --skip-extended-insert $db | $ziptool > $filename$ext");
+    if (!is_dir(YIIMP_MYSQLDUMP_PATH)) {
+        debuglog("backup: directory ".YIIMP_MYSQLDUMP_PATH." does not exist");
+        return;
     }
+
+    // Pass the credentials in a private option file instead of on the command
+    // line, where any local user could read them from the process list.
+    $cnf = tempnam(sys_get_temp_dir(), 'yiimp-dump');
+    chmod($cnf, 0600);
+    $esc = function ($v) { return '"'.addcslashes($v, "\\\"").'"'; };
+    file_put_contents($cnf, "[client]\nhost=".$esc($host)."\nuser=".$esc($user)."\npassword=".$esc($pass)."\n");
+
+    $old_umask = umask(077); // the dump contains every user's data
+    $dump = "mysqldump --defaults-extra-file=".escapeshellarg($cnf)." --single-transaction --skip-extended-insert ".escapeshellarg($db);
+    // faster on huge databases if the disk is fast (nvme), reduce the db lock time
+    system("$dump > ".escapeshellarg($filename));
+    umask($old_umask);
+    unlink($cnf);
+    shell_exec("$ziptool ".escapeshellarg($filename)." > /dev/null 2>&1 &"); // compress then the .sql in background (db is no more locked)
 }
 
 function BackendQuickClean()
@@ -62,7 +73,7 @@ function marketHistoryPrune($symbol = "")
 
     // Prune records older than 1 week, one max per hour
     $delay7D   = time() - 7 * 24 * 60 * 60;
-    $sqlFilter = (!empty($symbol)) ? "AND C.symbol='$symbol'" : '';
+    $sqlFilter = (!empty($symbol)) ? "AND C.symbol=".sqlQuote($symbol) : '';
     $prune     = dbolist("SELECT idcoin, idmarket,
         AVG(MH.price) AS price, AVG(MH.price2) AS price2, MAX(MH.balance) AS balance,
         MIN(MH.id) AS firstid, COUNT(MH.id) AS nbrecords, (MH.time DIV 3600) AS ival
@@ -165,7 +176,8 @@ function BackendOptimizeTables()
 {
     $list = dbolist("show tables");
     foreach ($list as $item) {
-        $tablename = $item['Tables_in_yaamp'];
+        // the column is named Tables_in_<database>
+        $tablename = reset($item);
         dbolist("optimize table $tablename");
 
         sleep(1);

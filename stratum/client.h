@@ -145,12 +145,12 @@ void client_initialize_difficulty(YAAMP_CLIENT *client);
 
 //////////////////////////////////////////////////////////////////////////
 
-int client_call(YAAMP_CLIENT *client, const char *method, const char *format, ...);
-int client_ask(YAAMP_CLIENT *client, const char *method, const char *format, ...);
+int client_call(YAAMP_CLIENT *client, const char *method, const char *format, ...) __attribute__((format(printf, 3, 4)));
+int client_ask(YAAMP_CLIENT *client, const char *method, const char *format, ...) __attribute__((format(printf, 3, 4)));
 
 void client_dump_all();
 
-int client_send_result(YAAMP_CLIENT *client, const char *format, ...);
+int client_send_result(YAAMP_CLIENT *client, const char *format, ...) __attribute__((format(printf, 2, 3)));
 int client_send_error(YAAMP_CLIENT *client, int error, const char *string);
 
 bool client_ask_stats(YAAMP_CLIENT *client);

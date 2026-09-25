@@ -65,7 +65,6 @@ function bter_api_user($method, $params=array())
 		debuglog("bter: $method failed ($status) ".strip_data($data).' '.curl_error($ch));
 	}
 
-	curl_close($ch);
 
 	return $obj;
 }

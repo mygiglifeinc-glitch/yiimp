@@ -6,20 +6,30 @@
 # Kudaraidee https://github.com/Kudaraidee/yiimp
 # And all the other devs that have helped with this project
 #####################
-CC=gcc
+#
+# Build dependencies (Ubuntu 22.04 / 24.04 / 26.04):
+#   build-essential pkg-config libmysqlclient-dev (or libmariadb-dev-compat)
+#   libcurl4-openssl-dev (or libcurl4-gnutls-dev) libssl-dev libgmp-dev
+#
+# Everything is linked dynamically against the distribution libraries.
 
-CFLAGS= -g -march=native
-SQLFLAGS= `mysql_config --cflags --libs`
+CC=gcc
+CXX=g++
+
+CFLAGS= -g -O2 -march=native
+SQLFLAGS= `mysql_config --cflags`
 
 # Comment this line to disable address check on login,
 # if you use the auto exchange feature...
 CFLAGS += -DNO_EXCHANGE
 
-#CFLAGS=-c -O2 -I /usr/include/mysql
-LDFLAGS=-O2 `mysql_config --libs`
+CXXFLAGS= -std=gnu++17 -Werror=return-type -Wno-format-truncation -MMD -MP
 
-LDLIBS=iniparser/libiniparser.a algos/libalgos.a sha3/libhash.a -lpthread -lgmp -lm -lstdc++
-LDLIBS+=-lmysqlclient
+LDFLAGS=
+LDLIBS=iniparser/libiniparser.a algos/libalgos.a sha3/libhash.a
+LDLIBS+=`mysql_config --libs`
+LDLIBS+=$(shell pkg-config --libs libcrypto 2>/dev/null || echo -lcrypto)
+LDLIBS+=-lpthread -lgmp -lm -lstdc++
 
 SOURCES=stratum.cpp db.cpp coind.cpp coind_aux.cpp coind_template.cpp coind_submit.cpp util.cpp list.cpp \
 	rpc.cpp job.cpp job_send.cpp job_core.cpp merkle.cpp share.cpp socket.cpp coinbase.cpp \
@@ -28,43 +38,45 @@ SOURCES=stratum.cpp db.cpp coind.cpp coind_aux.cpp coind_template.cpp coind_subm
 
 CFLAGS += -DHAVE_CURL
 SOURCES += rpc_curl.cpp
-LDCURL = $(shell /usr/bin/pkg-config --static --libs libcurl)
-LDFLAGS += $(LDCURL)
+LDCURL = $(shell pkg-config --libs libcurl 2>/dev/null || echo -lcurl)
+LDLIBS += $(LDCURL)
 
 OBJECTS=$(SOURCES:.cpp=.o)
 OUTPUT=stratum
 
-CODEDIR1=algos
-CODEDIR2=sha3
+LIBS=iniparser/libiniparser.a algos/libalgos.a sha3/libhash.a
 
-.PHONY: projectcode1 projectcode2
+.PHONY: all clean install libs
 
-all: projectcode1 projectcode2 $(SOURCES) $(OUTPUT)
+all: $(OUTPUT)
 
-projectcode1:
-	$(MAKE) -C $(CODEDIR1)
+# the sub-makes decide themselves whether something needs rebuilding
+libs:
+	$(MAKE) -C iniparser libiniparser.a
+	$(MAKE) -C algos
+	$(MAKE) -C sha3
 
-projectcode2:
-	$(MAKE) -C $(CODEDIR2)
+$(LIBS): libs
 
-$(SOURCES): stratum.h util.h
+$(OBJECTS): stratum.h util.h Makefile
 
-$(OUTPUT): $(OBJECTS)
-	$(CC) $(OBJECTS) $(LDLIBS) $(LDFLAGS) -o $@
+$(OUTPUT): $(OBJECTS) $(LIBS)
+	$(CXX) $(LDFLAGS) $(OBJECTS) $(LDLIBS) -o $@
+
+# hash regression test, not built by default: make hashtest && ./hashtest
+hashtest: hashtest.o $(LIBS)
+	$(CXX) $(LDFLAGS) hashtest.o $(LIBS) $(shell pkg-config --libs libcrypto 2>/dev/null || echo -lcrypto) -lpthread -lgmp -lm -o $@
 
 .cpp.o:
-	$(CC) $(CFLAGS) $(SQLFLAGS) -c $<
+	$(CXX) $(CFLAGS) $(CXXFLAGS) $(SQLFLAGS) -c $<
 
-.c.o:
-	$(CC) $(CFLAGS) -c $<
+-include $(OBJECTS:.o=.d) hashtest.d
 
 clean:
-	rm -f *.o
-	rm -f algos/*.o
-	rm -f algos/*.a
-	rm -f sha3/*.o
-	rm -f sha3/*.a
-	rm -f algos/ar2/*.o
+	rm -f *.o *.d $(OUTPUT) hashtest
+	$(MAKE) -C algos clean
+	$(MAKE) -C sha3 clean
+	$(MAKE) -C iniparser clean
 
 install: clean all
 	strip -s stratum

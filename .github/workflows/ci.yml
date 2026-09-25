@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [next, multi-port]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  php-lint:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        php: ['8.1', '8.3', '8.4']
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: shivammathur/setup-php@bf6b4fbd49ca58e4608c9c89fba0b8d90bd2a39f # 2.35.5
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+      - name: Lint every PHP file
+        run: find web -name '*.php' -print0 | xargs -0 -n1 -P4 php -l > /dev/null
+
+  stratum:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: Install build dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential pkg-config libmysqlclient-dev libcurl4-openssl-dev libssl-dev libgmp-dev
+      - name: Build blocknotify and stratum
+        run: |
+          make -C blocknotify
+          make -C stratum -j"$(nproc)"
+      - name: Hash regression test
+        run: make -C stratum hashtest && ./stratum/hashtest

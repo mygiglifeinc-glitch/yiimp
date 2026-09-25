@@ -2,6 +2,11 @@
 #ifndef __BLAKE2B_H__
 #define __BLAKE2B_H__
 
+/* distinct symbols from the argon2 blake2b (algos/blake2) of libalgos.a */
+#define blake2b_init   sph_blake2b_init
+#define blake2b_update sph_blake2b_update
+#define blake2b_final  sph_blake2b_final
+
 #include <stddef.h>
 #include <stdint.h>
 
@@ -18,7 +23,7 @@
 #endif
 
 // state context
-ALIGN(64) typedef struct {
+typedef struct ALIGN(64) {
 	uint8_t b[128]; // input buffer
 	uint64_t h[8];  // chained state
 	uint64_t t[2];  // total number of bytes

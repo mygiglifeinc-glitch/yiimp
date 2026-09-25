@@ -46,7 +46,7 @@ foreach ($list as $job)
     $hashrate = $hashrate ? Itoa2($hashrate) . 'h/s' : '';
     $maxhash = $job->speed ? Itoa2($job->speed) . 'h/s' : '';
 
-    $title = controller()->admin ? "-o stratum+tcp://$job->host:$job->port -u $job->username -p $job->password" : '';
+    $title = controller()->admin ? CHtml::encode("-o stratum+tcp://$job->host:$job->port -u $job->username -p $job->password") : '';
 
     $servername = substr($job->host, 0, 22);
     $price = mbitcoinvaluetoa($job->price);
@@ -57,7 +57,7 @@ foreach ($list as $job)
     if ($job->active) echo "<tr class='ssrow' style='background-color: #dfd'>";
     else echo "<tr class='ssrow'>";
 
-    if ($renter && $renter->id == $job->renterid) echo "<td title='$title'>$job->host</td>";
+    if ($renter && $renter->id == $job->renterid) echo "<td title='$title'>".CHtml::encode($job->host)."</td>";
     else echo "<td title='$title'></td>";
 
     //	echo "<td>$d</td>";

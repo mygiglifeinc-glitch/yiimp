@@ -19,6 +19,7 @@
 
 #if defined(_MSC_VER)
 #include <inttypes.h>
+#include <string.h>
 #define inline __inline
 #define ALIGN(x) __declspec(align(x))
 #else
@@ -34,7 +35,9 @@
 static inline uint32_t load32(const void *src)
 {
 #if defined(NATIVE_LITTLE_ENDIAN)
-	return *(uint32_t *)(src);
+	uint32_t w;
+	memcpy(&w, src, sizeof(w)); /* no strict aliasing violation */
+	return w;
 #else
 	const uint8_t *p = (uint8_t *)src;
 	uint32_t w = *p++;
@@ -48,7 +51,7 @@ static inline uint32_t load32(const void *src)
 static inline void store32(void *dst, uint32_t w)
 {
 #if defined(NATIVE_LITTLE_ENDIAN)
-	*(uint32_t *)(dst) = w;
+	memcpy(dst, &w, sizeof(w));
 #else
 	uint8_t *p = (uint8_t *)dst;
 	*p++ = (uint8_t)w; w >>= 8;
@@ -116,7 +119,7 @@ typedef struct __blake2s_param
 	uint8_t  personal[BLAKE2S_PERSONALBYTES];  // 32
 } blake2s_param;
 
-ALIGN( 64 ) typedef struct __blake2s_state
+typedef struct ALIGN(64) __blake2s_state
 {
 	uint32_t h[8];
 	uint32_t t[2];

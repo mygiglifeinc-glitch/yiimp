@@ -209,6 +209,13 @@ YAAMP_ALGO *stratum_find_algo(const char *name)
 
 ////////////////////////////////////////////////////////////////////////////////////////
 
+// copy a config string, missing keys give an empty string
+static void config_string(char *dst, size_t size, dictionary *ini, const char *key)
+{
+	const char *value = iniparser_getstring(ini, key, NULL);
+	snprintf(dst, size, "%s", value ? value : "");
+}
+
 int main(int argc, char **argv)
 {
 	if(argc < 2)
@@ -228,7 +235,7 @@ int main(int argc, char **argv)
 #endif
 
 	char configfile[1024];
-	sprintf(configfile, "%s.conf", argv[1]);
+	snprintf(configfile, sizeof(configfile), "%s.conf", argv[1]);
 
 	dictionary *ini = iniparser_load(configfile);
 	if(!ini)
@@ -238,22 +245,20 @@ int main(int argc, char **argv)
 	}
 
 	g_tcp_port = iniparser_getint(ini, "TCP:port", 3333);
-	strcpy(g_tcp_server, iniparser_getstring(ini, "TCP:server", NULL));
-	strcpy(g_tcp_password, iniparser_getstring(ini, "TCP:password", NULL));
+	config_string(g_tcp_server, sizeof(g_tcp_server), ini, "TCP:server");
+	config_string(g_tcp_password, sizeof(g_tcp_password), ini, "TCP:password");
 
-	strcpy(g_sql_host, iniparser_getstring(ini, "SQL:host", NULL));
-	strcpy(g_sql_database, iniparser_getstring(ini, "SQL:database", NULL));
-	strcpy(g_sql_username, iniparser_getstring(ini, "SQL:username", NULL));
-	strcpy(g_sql_password, iniparser_getstring(ini, "SQL:password", NULL));
+	config_string(g_sql_host, sizeof(g_sql_host), ini, "SQL:host");
+	config_string(g_sql_database, sizeof(g_sql_database), ini, "SQL:database");
+	config_string(g_sql_username, sizeof(g_sql_username), ini, "SQL:username");
+	config_string(g_sql_password, sizeof(g_sql_password), ini, "SQL:password");
 	g_sql_port = iniparser_getint(ini, "SQL:port", 3306);
 
 	// optional coin filters (to mine only one on a special port or a test instance)
-	char *coin_filter = iniparser_getstring(ini, "WALLETS:include", NULL);
-	strcpy(g_stratum_coin_include, coin_filter ? coin_filter : "");
-	coin_filter = iniparser_getstring(ini, "WALLETS:exclude", NULL);
-	strcpy(g_stratum_coin_exclude, coin_filter ? coin_filter : "");
+	config_string(g_stratum_coin_include, sizeof(g_stratum_coin_include), ini, "WALLETS:include");
+	config_string(g_stratum_coin_exclude, sizeof(g_stratum_coin_exclude), ini, "WALLETS:exclude");
 
-	strcpy(g_stratum_algo, iniparser_getstring(ini, "STRATUM:algo", NULL));
+	config_string(g_stratum_algo, sizeof(g_stratum_algo), ini, "STRATUM:algo");
 	g_stratum_difficulty = iniparser_getdouble(ini, "STRATUM:difficulty", 16);
 	g_stratum_nicehash_difficulty = iniparser_getdouble(ini, "STRATUM:nicehash", 16);
 	g_stratum_min_diff = iniparser_getdouble(ini, "STRATUM:diff_min", g_stratum_difficulty/2);
@@ -386,31 +391,32 @@ int main(int argc, char **argv)
 
 void *monitor_thread(void *p)
 {
-	int cacheHeight = 0;
-
 	while(!g_exiting)
 	{
-		sleep(0.2);
+		sleep(120);
 
-		g_list_coind.Enter();
-		for(CLI li = g_list_coind.first; li; li = li->next)
+		if(g_last_broadcasted + YAAMP_MAXJOBDELAY < time(NULL))
 		{
-			YAAMP_COIND *coind = (YAAMP_COIND *)li->data;
-			json_value *json = rpc_call(&coind->rpc, "getblockcount");
-			if (!json) continue;
-			json_int_t amount = json_get_int(json, "result");
+			g_exiting = true;
+			stratumlogdate("%s dead lock, exiting...\n", g_stratum_algo);
+			exit(1);
+		}
 
-			if (coind->height != amount) {
-                                if (coind->height != cacheHeight) {
-				      debuglog("coind->height differs from rpc response, forcing new template (%d vs %d)..\n", coind->height, amount);
-                                      cacheHeight = coind->height;
-                                }
-				coind_create_job(coind, true);
-				job_update();
+		if(g_max_shares && g_shares_counter) {
+
+			if((g_shares_counter - g_shares_log) > 10000) {
+				stratumlogdate("%s %luK shares...\n", g_stratum_algo, (g_shares_counter/1000u));
+				g_shares_log = g_shares_counter;
+			}
+
+			if(g_shares_counter > g_max_shares) {
+				g_exiting = true;
+				stratumlogdate("%s need a restart (%lu shares), exiting...\n", g_stratum_algo, (unsigned long) g_max_shares);
+				exit(1);
 			}
 		}
-		g_list_coind.Leave();
 	}
+	return NULL;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -464,8 +470,10 @@ void *stratum_thread(void *p)
 			close(sock);
 			g_exiting = true;
 			stratumlog("%s pthread_create error %d %d\n", g_stratum_algo, res, error);
+			continue;
 		}
 
 		pthread_detach(thread);
 	}
+	return NULL;
 }

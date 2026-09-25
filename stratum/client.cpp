@@ -1,15 +1,39 @@
 
 #include "stratum.h"
 
+// safe accessors for the (untrusted) params array sent by the miners
+static const char *json_param_string(json_value *json_params, unsigned int index)
+{
+	if(!json_is_array(json_params) || index >= json_params->u.array.length)
+		return NULL;
+
+	return json_string_value(json_params->u.array.values[index]);
+}
+
+static json_int_t json_param_int(json_value *json_params, unsigned int index)
+{
+	if(!json_is_array(json_params) || index >= json_params->u.array.length)
+		return 0;
+
+	json_value *val = json_params->u.array.values[index];
+	if(json_is_integer(val)) return val->u.integer;
+	if(json_is_double(val)) return (json_int_t) val->u.dbl;
+	return 0;
+}
+
 bool client_suggest_difficulty(YAAMP_CLIENT *client, json_value *json_params)
 {
 	if(json_params->u.array.length>0)
 	{
-		double diff = client_normalize_difficulty(json_params->u.array.values[0]->u.dbl);
-		uint64_t user_target = diff_to_target(diff);
+		double diff = json_double_value(json_params->u.array.values[0]);
+		if(isfinite(diff) && diff > 0)
+		{
+			diff = client_normalize_difficulty(diff);
+			uint64_t user_target = diff_to_target(diff);
 
-		if(user_target >= YAAMP_MINDIFF && user_target <= YAAMP_MAXDIFF)
-			client->difficulty_actual = diff;
+			if(user_target >= YAAMP_MINDIFF && user_target <= YAAMP_MAXDIFF)
+				client->difficulty_actual = diff;
+		}
 	}
 
 	client_send_result(client, "true");
@@ -45,8 +69,9 @@ bool client_subscribe(YAAMP_CLIENT *client, json_value *json_params)
 
 	if(json_params->u.array.length>0)
 	{
-		if (json_params->u.array.values[0]->u.string.ptr)
-			strncpy(client->version, json_params->u.array.values[0]->u.string.ptr, 1023);
+		const char *version = json_param_string(json_params, 0);
+		if (version)
+			snprintf(client->version, sizeof(client->version), "%s", version);
 
 		if (strstr(client->version, "NiceHash"))
       client->difficulty_actual = g_stratum_nicehash_difficulty;
@@ -62,8 +87,9 @@ bool client_subscribe(YAAMP_CLIENT *client, json_value *json_params)
 	if(json_params->u.array.length>1)
 	{
 		char notify_id[1024] = { 0 };
-		if (json_params->u.array.values[1]->u.string.ptr)
-			strncpy(notify_id, json_params->u.array.values[1]->u.string.ptr, 1023);
+		const char *param_id = json_param_string(json_params, 1);
+		if (param_id)
+			snprintf(notify_id, sizeof(notify_id), "%s", param_id);
 
 		YAAMP_CLIENT *client1 = client_find_notify_id(notify_id, true);
 		if(client1)
@@ -205,17 +231,25 @@ bool client_authorize(YAAMP_CLIENT *client, json_value *json_params)
 		return false;
 	}
 
-	if(json_params->u.array.length>1 && json_params->u.array.values[1]->u.string.ptr)
-		strncpy(client->password, json_params->u.array.values[1]->u.string.ptr, 1023);
+	const char *password = json_param_string(json_params, 1);
+	if(password)
+		snprintf(client->password, sizeof(client->password), "%s", password);
 
 	if (g_list_client.count >= g_stratum_max_cons) {
 		client_send_error(client, 21, "Server full");
 		return false;
 	}
 
-	if(json_params->u.array.length>0 && json_params->u.array.values[0]->u.string.ptr)
+	const char *username = json_param_string(json_params, 0);
+	if(!username)
 	{
-		strncpy(client->username, json_params->u.array.values[0]->u.string.ptr, 1023);
+		clientlog(client, "authorize, bad params");
+		client_send_error(client, 20, "Invalid username");
+		return false;
+	}
+	else
+	{
+		snprintf(client->username, sizeof(client->username), "%s", username);
 
 		db_check_user_input(client->username);
 		int len = strlen(client->username);
@@ -225,7 +259,7 @@ bool client_authorize(YAAMP_CLIENT *client, json_value *json_params)
 		char *sep = strpbrk(client->username, ".,;:");
 		if (sep) {
 			*sep = '\0';
-			strncpy(client->worker, sep+1, 1023-len);
+			snprintf(client->worker, sizeof(client->worker), "%s", sep+1);
 			if (strlen(client->username) > MAX_ADDRESS_LEN) return false;
 		} else if (len > MAX_ADDRESS_LEN) {
 			return false;
@@ -276,24 +310,30 @@ bool client_authorize(YAAMP_CLIENT *client, json_value *json_params)
 bool client_update_block(YAAMP_CLIENT *client, json_value *json_params)
 {
 	// password, id, block hash
-	if(json_params->u.array.length < 3 || !json_params->u.array.values[0]->u.string.ptr)
+	const char *password = json_param_string(json_params, 0);
+	const char *hash = json_param_string(json_params, 2);
+	if(json_params->u.array.length < 3 || !password || !hash)
 	{
 		clientlog(client, "update block, bad params");
 		return false;
 	}
 
-	if(strcmp(g_tcp_password, json_params->u.array.values[0]->u.string.ptr))
+	if(!g_tcp_password[0] || strcmp(g_tcp_password, password))
 	{
 		clientlog(client, "update block, bad password");
 		return false;
 	}
 
-	int coinid = json_params->u.array.values[1]->u.integer;
-	if(!coinid) return false;
+	if(strlen(hash) > 160 || !ishexa((char *)hash, strlen(hash)))
+	{
+		clientlog(client, "update block, bad hash");
+		return false;
+	}
+
+	int coinid = (int) json_param_int(json_params, 1);
+	if(coinid <= 0) return false;
 	YAAMP_COIND *coind = (YAAMP_COIND *)object_find(&g_list_coind, coinid, true);
 	if(!coind) return false;
-
-	const char* hash = json_params->u.array.values[2]->u.string.ptr;
 
 	if (g_debuglog_client) {
 		debuglog("notify: new %s block %s\n", coind->symbol, hash);
@@ -563,7 +603,7 @@ void *client_thread(void *p)
 		}
 
 		json_value *json_params = json_get_array(json, "params");
-		if(!json_params)
+		if(!json_is_array(json_params))
 		{
 			json_value_free(json);
 			clientlog(client, "bad json, no params");

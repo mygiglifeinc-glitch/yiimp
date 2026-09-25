@@ -46,7 +46,6 @@ class LiveCoinApi
 				debuglog("LiveCoin: Auth API failed ($status) ".strip_data($response).' '.curl_error($ch));
 			}
 		}
-		curl_close($ch);
 
 		return isset($a) ? $a : false;
 	}
@@ -71,7 +70,6 @@ class LiveCoinApi
 				debuglog("LiveCoin: Auth API failed ($status) ".strip_data($response).' '.curl_error($ch));
 			}
 		}
-		curl_close($ch);
 
 		return isset($a) ? $a : false;
 	}

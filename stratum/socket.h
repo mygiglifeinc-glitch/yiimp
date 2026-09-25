@@ -24,11 +24,12 @@ YAAMP_SOCKET *socket_initialize(int sock);
 void socket_close(YAAMP_SOCKET *s);
 
 json_value *socket_nextjson(YAAMP_SOCKET *s, YAAMP_CLIENT *client=NULL);
-int socket_send(YAAMP_SOCKET *s, const char *format, ...);
+int socket_send(YAAMP_SOCKET *s, const char *format, ...) __attribute__((format(printf, 2, 3)));
 
 int socket_send_raw(YAAMP_SOCKET *s, const char *buffer, int size);
 
-static union {
+// PROXY protocol header (see socket_real_ip), one per connection
+union yaamp_proxy_hdr {
 	struct {
 		char line[108];
 	} v1;
@@ -56,4 +57,4 @@ static union {
 			} unx;
 		} addr;
 	} v2;
-} hdr;
+};

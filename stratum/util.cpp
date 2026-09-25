@@ -5,60 +5,81 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 
-bool json_get_bool(json_value *json, const char *name)
+// These helpers are used on JSON received from the miners (untrusted) and
+// from the coin daemons. Never interpret a value as another type than the
+// one the parser gave it: reading u.string.ptr or u.array.values of a
+// number/object would dereference attacker controlled memory.
+
+static json_value *json_find_member(json_value *json, const char *name)
 {
-	for(int i=0; i<json->u.object.length; i++)
+	if(!json || json->type != json_object || !name)
+		return NULL;
+
+	for(unsigned int i=0; i<json->u.object.length; i++)
 	{
-		if(!strcmp(json->u.object.values[i].name, name))
-			return json->u.object.values[i].value->u.boolean;
-	}
-
-	return false;
-}
-
-json_int_t json_get_int(json_value *json, const char *name)
-{
-	for(int i=0; i<json->u.object.length; i++)
-	{
-		if(!strcmp(json->u.object.values[i].name, name))
-			return json->u.object.values[i].value->u.integer;
-	}
-
-	return 0;
-}
-
-double json_get_double(json_value *json, const char *name)
-{
-	for(int i=0; i<json->u.object.length; i++)
-	{
-		if(!strcmp(json->u.object.values[i].name, name))
-			return json->u.object.values[i].value->u.dbl;
-	}
-
-	return 0;
-}
-
-const char *json_get_string(json_value *json, const char *name)
-{
-	for(int i=0; i<json->u.object.length; i++)
-	{
-		if(!strcmp(json->u.object.values[i].name, name))
-			return json->u.object.values[i].value->u.string.ptr;
-	}
-
-	return NULL;
-}
-
-json_value *json_get_array(json_value *json, const char *name)
-{
-	for(int i=0; i<json->u.object.length; i++)
-	{
-//		if(json->u.object.values[i].value->type == json_array && !strcmp(json->u.object.values[i].name, name))
 		if(!strcmp(json->u.object.values[i].name, name))
 			return json->u.object.values[i].value;
 	}
 
 	return NULL;
+}
+
+bool json_get_bool(json_value *json, const char *name)
+{
+	json_value *val = json_find_member(json, name);
+	if(!val) return false;
+
+	switch(val->type)
+	{
+		case json_boolean: return val->u.boolean != 0;
+		case json_integer: return val->u.integer != 0;
+		case json_double: return val->u.dbl != 0.;
+		case json_string: return val->u.string.length != 0; // legacy behaviour
+		default: return false;
+	}
+}
+
+json_int_t json_get_int(json_value *json, const char *name)
+{
+	json_value *val = json_find_member(json, name);
+	if(!val) return 0;
+
+	switch(val->type)
+	{
+		case json_integer: return val->u.integer;
+		case json_double: return (json_int_t) val->u.dbl;
+		case json_boolean: return val->u.boolean;
+		default: return 0;
+	}
+}
+
+double json_get_double(json_value *json, const char *name)
+{
+	json_value *val = json_find_member(json, name);
+	if(!val) return 0;
+
+	switch(val->type)
+	{
+		case json_double: return val->u.dbl;
+		case json_integer: return (double) val->u.integer;
+		default: return 0;
+	}
+}
+
+const char *json_get_string(json_value *json, const char *name)
+{
+	json_value *val = json_find_member(json, name);
+	if(!val || val->type != json_string)
+		return NULL;
+
+	return val->u.string.ptr;
+}
+
+// note: returns the member whatever its type is (some callers use it to get
+// objects or booleans), check json_is_array() before using u.array
+json_value *json_get_array(json_value *json, const char *name)
+{
+	return json_find_member(json, name);
 }
 
 //json_value *json_get_array_from_array(json_value *json, const char *name)
@@ -74,13 +95,7 @@ json_value *json_get_array(json_value *json, const char *name)
 
 json_value *json_get_object(json_value *json, const char *name)
 {
-	for(int i=0; i<json->u.object.length; i++)
-	{
-		if(!strcmp(json->u.object.values[i].name, name))
-			return json->u.object.values[i].value;
-	}
-
-	return NULL;
+	return json_find_member(json, name);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -94,7 +109,7 @@ void initlog(const char *algo)
 {
 	char debugfile[1024];
 
-	sprintf(debugfile, "%s.log", algo);
+	snprintf(debugfile, sizeof(debugfile), "%s.log", algo);
 	g_debuglog = fopen(debugfile, "w");
 
 	g_stratumlog = fopen("stratum.log", "a");
@@ -124,7 +139,7 @@ void clientlog(YAAMP_CLIENT *client, const char *format, ...)
 	va_list args;
 
 	va_start(args, format);
-	vsprintf(buffer, format, args);
+	vsnprintf(buffer, sizeof(buffer), format, args);
 	va_end(args);
 
 	time_t rawtime;
@@ -137,7 +152,7 @@ void clientlog(YAAMP_CLIENT *client, const char *format, ...)
 	strftime(buffer2, 80, "%Y-%m-%d %H:%M:%S", timeinfo);
 
 	char buffer3[YAAMP_SMALLBUFSIZE];
-	sprintf(buffer3, "%s [%s] %s, %s, %s\n", buffer2, client->sock->ip, client->username, g_current_algo->name, buffer);
+	snprintf(buffer3, sizeof(buffer3), "%s [%s] %s, %s, %s\n", buffer2, client->sock->ip, client->username, g_current_algo->name, buffer);
 
 	printf("%s", buffer3);
 	if(g_debuglog)
@@ -163,7 +178,7 @@ void debuglog(const char *format, ...)
 	va_list args;
 
 	va_start(args, format);
-	vsprintf(buffer, format, args);
+	vsnprintf(buffer, sizeof(buffer), format, args);
 	va_end(args);
 
 	time_t rawtime;
@@ -191,7 +206,7 @@ void debuglog_hex(void *data, int len)
 	for(int i=0; i < len; i++)
 		sprintf(hex+strlen(hex), "%02x", bin[i]);
 	strcpy(hex+strlen(hex), "\n");
-	debuglog(hex);
+	debuglog("%s", hex);
 	free(hex);
 }
 
@@ -201,7 +216,7 @@ void stratumlog(const char *format, ...)
 	va_list args;
 
 	va_start(args, format);
-	vsprintf(buffer, format, args);
+	vsnprintf(buffer, sizeof(buffer), format, args);
 	va_end(args);
 
 	time_t rawtime;
@@ -243,7 +258,7 @@ void stratumlogdate(const char *format, ...)
 	strftime(date, 16, "%Y-%m-%d", timeinfo);
 
 	va_start(args, format);
-	vsprintf(buffer, format, args);
+	vsnprintf(buffer, sizeof(buffer), format, args);
 	va_end(args);
 
 	stratumlog("%s %s", date, buffer);

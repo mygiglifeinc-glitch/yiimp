@@ -505,7 +505,7 @@ function updateRawCoin($marketname, $symbol, $name = 'unknown')
         ':symbol' => $symbol
     ));
     foreach ($list as $coin) {
-        $market = getdbosql('db_markets', "coinid=$coin->id and name='$marketname'");
+        $market = getdbosql('db_markets', "coinid=$coin->id and name=:name", array(':name'=>$marketname));
         if (!$market) {
             $market         = new db_markets;
             $market->coinid = $coin->id;

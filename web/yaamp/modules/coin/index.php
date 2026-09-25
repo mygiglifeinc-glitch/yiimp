@@ -54,8 +54,8 @@ foreach ($coins as $coin) {
     if ($coin->installed)
         $total_installed++;
 
-    $coin->errors  = substr($coin->errors, 0, 30);
-    $coin->version = substr($coin->version, 0, 20);
+    $coin->errors  = substr((string) $coin->errors, 0, 30);
+    $coin->version = substr((string) $coin->version, 0, 20);
     $difficulty    = Itoa2($coin->difficulty, 3);
     $created       = datetoa2($coin->created);
 
