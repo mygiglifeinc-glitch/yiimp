@@ -27,6 +27,7 @@
 #include <climits>
 #include <cstdlib>
 #include <cstring>
+#include <ctime>
 #include <memory>
 #include <mutex>
 #include <thread>
@@ -172,8 +173,9 @@ struct epoch_context
 	int full_dataset_num_items;
 	hash512 *light_cache;
 	uint32_t l1_cache[l1_cache_num_items];
+	std::atomic<time_t> last_used;
 
-	epoch_context() : light_cache(NULL) {}
+	epoch_context() : light_cache(NULL), last_used(0) {}
 	~epoch_context() { free(light_cache); }
 };
 
@@ -291,7 +293,10 @@ static std::shared_ptr<epoch_context> find_context(context_cache &cc, int epoch)
 {
 	std::lock_guard<std::mutex> lock(cc.mutex);
 	for (auto &c : cc.contexts)
-		if (c->epoch == epoch) return c;
+		if (c->epoch == epoch) {
+			c->last_used = time(NULL);
+			return c;
+		}
 	return std::shared_ptr<epoch_context>();
 }
 
@@ -309,13 +314,24 @@ static std::shared_ptr<epoch_context> get_context(const progpow_variant *v, int 
 	if (!ctx) return ctx;
 
 	std::lock_guard<std::mutex> lock(cc.mutex);
+	ctx->last_used = time(NULL);
 	cc.contexts.push_back(ctx);
-	// keep the 2 most recent epochs (current and next, or current and previous)
-	while (cc.contexts.size() > 2) {
-		auto oldest = std::min_element(cc.contexts.begin(), cc.contexts.end(),
+	// Keep the epochs in use: the current and next one of each coin mined with this algo
+	// (several coins of an algo can be at different epochs). Contexts unused for an hour
+	// are freed, and at most max_contexts are kept (least recently used out).
+	const size_t max_contexts = 6;
+	const time_t now = time(NULL);
+	for (size_t i = 0; i < cc.contexts.size(); ) {
+		if (cc.contexts[i] != ctx && cc.contexts.size() > 2 && now - cc.contexts[i]->last_used > 3600)
+			cc.contexts.erase(cc.contexts.begin() + i);
+		else
+			i++;
+	}
+	while (cc.contexts.size() > max_contexts) {
+		auto lru = std::min_element(cc.contexts.begin(), cc.contexts.end(),
 			[](const std::shared_ptr<epoch_context> &a, const std::shared_ptr<epoch_context> &b) {
-				return a->epoch < b->epoch; });
-		cc.contexts.erase(oldest);
+				return a->last_used < b->last_used; });
+		cc.contexts.erase(lru);
 	}
 	return ctx;
 }

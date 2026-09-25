@@ -17,7 +17,7 @@ Trying to install this on a server not built by our installer will cause headach
 `kawpow` (RVN and forks), `evrprogpow` (EVR), `meowpow` (MEWC), `firopow` (FIRO), `sccpow` (SCC)
 and `meraki` (TLS) use the KawPoW pool protocol (kawpowminer, T-Rex, NBMiner, TeamRedMiner...),
 ports 9501-9506 in `stratum/config.sample`. No extra build dependency. Every stratum keeps the
-light cache of the current and next epoch in memory (16 MB + 128 KB per epoch each: ~95 MB
+light cache of the current and next epoch of each coin in memory (16 MB + 128 KB per epoch each: ~95 MB
 for RVN or FIRO today, ~145 MB for MEWC) and verifies each share from it (~20 ms of CPU).
 Share difficulty 1 is ~2^32 hashes, like a sha256 share: the algos need no web hashrate factor.
 

@@ -38,9 +38,10 @@ void progpow_seed_hash(const progpow_variant *v, int height, unsigned char seed[
 /* size in bytes of the light cache of the epoch of this height */
 size_t progpow_light_cache_size(const progpow_variant *v, int height);
 
-/* make sure the light cache of the epoch of this height is ready (built once, the
-   2 most recent epochs are kept); the next epoch is prepared in the background when
-   the height is close to its start. Returns 0 on allocation failure. */
+/* make sure the light cache of the epoch of this height is ready (built once and kept
+   while in use: the current and next epoch of each coin, 6 at most); the next epoch is
+   prepared in the background when the height is close to its start. Returns 0 on
+   allocation failure. */
 int progpow_prepare(const progpow_variant *v, int height);
 
 /* full light evaluation (slow: ~64 x 2 KB dataset items computed from the cache) */
