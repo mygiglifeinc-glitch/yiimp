@@ -28,6 +28,7 @@ SOURCES=lyra2re.c lyra2v2.c lyra2v3.c Lyra2.c lyra2z.c Lyra2-z.c lyra2zz.c Lyra2
 	sha512256d.c sha3_256t.c verthash.c \
 	ghostrider.c flex.c cryptonote/cn_slow_hash.c cryptonote/aesb.c cryptonote/c_keccak.c cryptonote/c_blake256.c \
 	cryptonote/c_groestl.c cryptonote/c_jh.c cryptonote/c_skein.c \
+	progpow/keccak.c progpow/keccakf800.c progpow/keccakf1600.c progpow/primes.c progpow/progpow.cpp \
 
 OBJECTS=$(patsubst %.cpp,%.o,$(SOURCES:.c=.o))
 OUTPUT=libalgos.a
@@ -55,3 +56,4 @@ clean:
 	rm -f blake2/*.o
 	rm -f SWIFFTX/*.o
 	rm -f cryptonote/*.o cryptonote/*.d
+	rm -f progpow/*.o progpow/*.d

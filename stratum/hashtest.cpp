@@ -365,6 +365,88 @@ static int run_kats(const char *only)
 	return errors;
 }
 
+
+// ProgPoW family (kawpow stratum protocol): real 120 byte headers (80 bytes up to nHeight,
+// nNonce64, mix_hash, as serialized). The mix hash is recomputed from the epoch light cache
+// and compared with the one of the block, then the final (pow) hash with the expected one.
+// Building the light cache of an epoch takes a few seconds.
+struct progpow_kat {
+	const char *algo;
+	const char *header;
+	const char *final;   // expected pow hash (displayed)
+	bool check_mix;      // false: the block has no real mix hash (genesis), only the final hash is checked
+	const char *source;
+};
+
+static const struct progpow_kat progpow_kats[] = {
+	{ "kawpow", 
+	  "000000305985e71a7421b997444ba853d289210025650f1612807f922f7500000000000027dd65621fab2ca7f4dcfd58f811b97ab9fcc9835817faf363caa49b61d2096325d81a6581a2001bc0c62d00cb9a4f31000000add4c22a736fcbc65c52abc1e1540680989793b94fd71d3f51cd8848935fdd349d",
+	  "0000000000005201a0af104a92788105ebb3519ed2d5bb68625d8e89da8b32e4", true,
+	  "RVN block 3000000, epoch 400 (= block hash)" },
+	{ "firopow", 
+	  "001000200e5d9b76b5f9a665feca86d18815f8b36b80d02280e468a55e27ae87caa56d552ad46e4432f1a24fdb7cccafbb4b39989c9069c21c316517e05450ad46e4d178814147677c4b601b40420f0043e03103c1fc8eaa4006ded037e8bee9a3dc73f876c922565e78f3c23c237c5cd79acb2a71376a6f",
+	  "00000000005c903a34ec16172c6b3f82f2e473467dc3f74d8a4abd386d2bd02c", true,
+	  "FIRO block 1000000 (d20e3730...a147), epoch 769" },
+	{ "firopow", 
+	  "00100020048bcda3be718f845f9730a996542ef84328be96db6b9901f6991a496c0393967a2ef94586d3cdf7046e894f75d1f66cc8b3a063531f4faeb7361f054e55e39d468bb56a5a80001c581a1500d81aa29c073f06bfa55662b7bf2ea4bf9de827ccd0269c197a8bd7e3fffd976061193756847d0605",
+	  "00000000001bed0836b81ca3d82c8a92d0284d1ad70ca64db7fb1e4e6fc29d0d", true,
+	  "FIRO block 1383000 (64159a62...9d98), epoch 1063 clamped to 650" },
+	{ "meraki", 
+	  "000000301676899cd9383285763bdf5333550d4a5062a6c27cbcb0aa72fed10700000000e5ad27bf37c7cf6ac21e19178e00627ec676b04191f81beedf90c309a5211c5b69d7b56a017d141c1813110051f4cb230020f17f97f89253640adbb026fcd14fd99114648a8c35562f9b4cd864a59eabd48ad983",
+	  "0000000000346dfa0a16180390c5bff789896550d50831323b615e35e5bb8f80", true,
+	  "TLS block 1119000 (= block hash), epoch 40" },
+	{ "evrprogpow", 
+	  "04000000000000000000000000000000000000000000000000000000000000000000000062929683d3ddfc68b5efa54fe8bef118a0b2951012b4ccfcf12a0db175c791c1ac805d63ffff001e00000000f41e1b00000000000000000000000000000000000000000000000000000000000000000000000000",
+	  "0000007b11d0481b2420a7c656ef76775d54ab5b29ee7ea250bc768535693b05", false,
+	  "EVR genesis (= hashGenesisBlock, null mix hash)" },
+	{ NULL, NULL, NULL, false, NULL }
+};
+
+static int run_progpow_kats(const char *only)
+{
+	int errors = 0;
+	for (int k = 0; progpow_kats[k].algo; k++) {
+		const struct progpow_kat *t = &progpow_kats[k];
+		if (only && strcmp(only, t->algo)) continue;
+		const progpow_variant *v = progpow_find_variant(t->algo);
+		unsigned char hdr[120], hh[32], hh_be[32], mix_be[32], mix[32], final[32];
+		char hex[65];
+		from_hex(t->header, hdr, 120);
+		uint32_t height;
+		uint64_t nonce;
+		memcpy(&height, hdr + 76, 4);
+		memcpy(&nonce, hdr + 80, 8);
+		sha256_double_hash((const char *) hdr, (char *) hh, 80);
+		for (int i = 0; i < 32; i++) {
+			hh_be[i] = hh[31 - i];
+			mix_be[i] = hdr[88 + 31 - i];
+		}
+		bool ok;
+		if (t->check_mix) {
+			ok = progpow_hash(v, (int) height, hh_be, nonce, mix, final) && !memcmp(mix, mix_be, 32);
+		} else {
+			progpow_hash_no_verify(v, (int) height, hh_be, nonce, mix_be, final);
+			ok = true;
+		}
+		to_hex(final, 32, hex);
+		ok = ok && !strcmp(hex, t->final);
+		// the yiimp hash function of the algo gives the same (little endian) hash
+		if (ok && t->check_mix) {
+			unsigned char out[32];
+			progpow_header_hash(v, (const char *) hdr, (char *) out, 120);
+			to_hex_be(out, 32, hex);
+			ok = !strcmp(hex, t->final);
+		}
+		if (!ok) {
+			printf("FAIL %s KAT (%s): %s\n", t->algo, t->source, hex);
+			errors++;
+		} else {
+			printf("OK   %s KAT (%s)\n", t->algo, t->source);
+		}
+	}
+	return errors;
+}
+
 int main(int argc, char **argv)
 {
 	unsigned char input[256];
@@ -390,6 +472,7 @@ int main(int argc, char **argv)
 	}
 
 	errors += run_kats(argc > 1 ? argv[1] : NULL);
+	errors += run_progpow_kats(argc > 1 ? argv[1] : NULL);
 	for (int k = 0; kat_vectors[k].name; k++) {
 		unsigned char hdr[80];
 		if (argc > 1 && strcmp(argv[1], kat_vectors[k].name)) continue;

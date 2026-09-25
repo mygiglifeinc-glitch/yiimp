@@ -248,3 +248,4 @@ void sha3d_hash_hex(const char *input, char *output, unsigned int len);
 #include "algos/zr5.h"
 #include "algos/ghostrider.h"
 #include "algos/flex.h"
+#include "algos/progpow/progpow.h"
