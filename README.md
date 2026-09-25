@@ -2,7 +2,18 @@
 ### This fork of YiiMP is designed to work with our Ultimate Crypto-Server Installer program.
 Trying to install this on a server not built by our installer will cause headaches, frustrations, and screaming loudly at your monitor.
 
-#### Please go to https://github.com/cryptopool-builders/Multi-Pool-Installer for our installer.
+#### Please go to https://github.com/mygiglifeinc-glitch/Multi-Pool-Installer for our installer.
+
+## Requirements
+
+- Ubuntu 22.04, 24.04 or 26.04 LTS (x86_64)
+- PHP 8.1 or newer (the installer uses PHP 8.3); the bundled Yii framework is 1.1.32
+- MariaDB 10.6 or newer
+- Stratum build: `build-essential pkg-config libmysqlclient-dev libcurl4-openssl-dev libssl-dev libgmp-dev`
+  (`make -C stratum`, then `make -C stratum hashtest && stratum/hashtest` to check the hash functions)
+
+Coins can be given their own stratum port with the *Dedicated Port* setting on the coin page;
+the old `multi-port` branch is no longer needed.
 
 ## Changes to this fork include but not limited to:
 
