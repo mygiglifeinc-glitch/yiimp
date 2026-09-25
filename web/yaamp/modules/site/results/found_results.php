@@ -9,6 +9,7 @@ function WriteBoxHeader($title)
 $showrental = (bool)YAAMP_RENTAL;
 
 $algo_from_query_param = getparam('algo');
+if (!is_string($algo_from_query_param)) $algo_from_query_param = '';
 if ($algo_from_query_param)
 {
     // Query param is set
@@ -30,8 +31,8 @@ else
     }
 }
 
-$count = getparam('count');
-$count = $count ? $count : 50;
+$count = intval(getparam('count'));
+$count = ($count > 0 && $count <= 500) ? $count : 50;
 
 $algo_header = isset($r_algo) ? implode(',', $r_algo) : 'any algo';
 WriteBoxHeader("Last $count Blocks ($algo_header)");

@@ -325,9 +325,14 @@ class RentingController extends CommonController
         $job->algo = getparam('order_algo');
         $job->username = getparam('order_username');
         $job->password = getparam('order_password');
-        $job->percent = getparam('order_percent');
-        $job->price = getparam('order_price');
-        $job->speed = getparam('order_speed') * 1000000;
+        if (!in_array($job->algo, yaamp_get_algos(), true) || !is_string($job->username) || !is_string($job->password))
+        {
+            $this->redirect('/renting');
+            return;
+        }
+        if ($this->admin) $job->percent = floatval(getparam('order_percent'));
+        $job->price = floatval(getparam('order_price'));
+        $job->speed = floatval(getparam('order_speed')) * 1000000;
 
         if (empty($job->algo) || empty($job->username) || empty($job->password) || empty($job->price) || empty($job->speed) || empty('' . getparam('order_address')) || empty('' . getparam('order_host')))
         {
@@ -398,10 +403,10 @@ class RentingController extends CommonController
         {
             $id = $job->id;
             $a = $job->algo;
-            $server = "$job->host:$job->port";
-            $username = $job->username;
-            $password = $job->password;
-            $percent = $job->percent;
+            $server = CHtml::encode("$job->host:$job->port");
+            $username = CHtml::encode($job->username);
+            $password = CHtml::encode($job->password);
+            $percent = CHtml::encode($job->percent);
             $price = mbitcoinvaluetoa($job->price);
             $speed = $job->speed / 1000000;
         }

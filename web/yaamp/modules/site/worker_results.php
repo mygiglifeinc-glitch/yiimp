@@ -1,7 +1,7 @@
 <?php
 
 if (isset($_GET['algo']))
-    user()->setState('yaamp-algo', $_GET['algo']);
+    user()->setState('yaamp-algo', getalgoparam());
 
 $algo = user()->getState('yaamp-algo');
 

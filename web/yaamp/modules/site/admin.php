@@ -8,6 +8,7 @@ echo getAdminSideBarLinks();
 echo '&nbsp;<a href="/site/emptymarkets">Empty Markets</a>&nbsp;';
 
 $server = getparam('server');
+$server = is_string($server) ? preg_replace('/[^A-Za-z0-9_.:\-]/', '', $server) : ''; // echoed in js
 
 echo <<<end
 <div align="right" style="margin-top: -14px; margin-bottom: 6px;">

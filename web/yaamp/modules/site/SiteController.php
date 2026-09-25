@@ -473,6 +473,10 @@ class SiteController extends CommonController
         $algo     = user()->getState('yaamp-algo');
         $memcache = controller()->memcache->memcache;
         $memkey   = $algo . '_' . str_replace('/', '_', $partial);
+        // some query params change the output (found_results?algo=&count=)
+        $params   = array_intersect_key($_GET, array('algo' => 1, 'count' => 1));
+        if (!empty($params))
+            $memkey .= '_' . md5(serialize($params));
         $html     = controller()->memcache->get($memkey);
 
         if (!empty($html)) {

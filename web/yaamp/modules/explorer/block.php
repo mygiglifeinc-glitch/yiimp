@@ -3,8 +3,9 @@ if (!$coin) return;
 
 $this->pageTitle = $coin->name . " block explorer";
 
-$txid = getparam('txid');
-$q = getparam('q');
+// hex only, both are echoed in the javascript below
+$txid = gethexparam('txid');
+$q = gethexparam('q');
 if (!empty($q) && ctype_xdigit($q)) $txid = $q;
 elseif (empty($txid)) $txid = 'txid not set'; // prevent highlight
 echo <<<END
